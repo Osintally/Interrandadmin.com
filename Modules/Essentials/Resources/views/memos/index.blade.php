@@ -47,8 +47,11 @@
             </div>
             <form id="compose_memo_form" enctype="multipart/form-data">
                 @csrf
+<<<<<<< HEAD
                 <input type="hidden" name="_method" id="form_method" value="POST">
                 <input type="hidden" name="memo_id" id="memo_id" value="">
+=======
+>>>>>>> 8bb22bf (Implement corporate memos system)
                 <div class="modal-body">
                     <div class="row">
                         <div class="col-md-12">
@@ -127,6 +130,7 @@ $(document).ready(function() {
         order: [[3, 'desc']]
     });
 
+<<<<<<< HEAD
     // Initialize TinyMCE when modal is shown
     function initTinyMCE() {
         // Destroy existing instance if it exists
@@ -156,6 +160,13 @@ $(document).ready(function() {
         if (tinymce.get('memo_body')) {
             tinymce.get('memo_body').destroy();
         }
+=======
+    tinymce.init({
+        selector: '#memo_body',
+        height: 300,
+        plugins: 'advlist autolink lists link image charmap print preview anchor searchreplace visualblocks code fullscreen insertdatetime media table paste code help wordcount',
+        toolbar: 'undo redo | formatselect | bold italic backcolor | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | removeformat | help'
+>>>>>>> 8bb22bf (Implement corporate memos system)
     });
 
     $('#to_recipients, #cc_recipients, #bcc_recipients').select2({
@@ -181,6 +192,7 @@ $(document).ready(function() {
     });
 
     $('#compose_memo_btn').click(function() {
+<<<<<<< HEAD
         resetMemoForm();
         $('.modal-title').text('@lang("essentials::lang.compose_memo")');
         $('#form_method').val('POST');
@@ -209,6 +221,14 @@ $(document).ready(function() {
         $('#form_method').val('POST');
         $('#memo_id').val('');
     }
+=======
+        $('#compose_memo_form')[0].reset();
+        $('#to_recipients, #cc_recipients, #bcc_recipients').val(null).trigger('change');
+        tinymce.get('memo_body').setContent('');
+        $('#attachment_preview').empty();
+        $('#compose_memo_modal').modal('show');
+    });
+>>>>>>> 8bb22bf (Implement corporate memos system)
 
     $('#memo_attachments').change(function() {
         var files = this.files;
@@ -225,6 +245,7 @@ $(document).ready(function() {
 
     $('#compose_memo_form').submit(function(e) {
         e.preventDefault();
+<<<<<<< HEAD
         
         // Save TinyMCE content before validation
         if (tinymce.get('memo_body')) {
@@ -263,10 +284,14 @@ $(document).ready(function() {
         if (!isValid) {
             return false;
         }
+=======
+        tinymce.triggerSave();
+>>>>>>> 8bb22bf (Implement corporate memos system)
         
         var formData = new FormData(this);
         formData.append('send', '1');
         
+<<<<<<< HEAD
         // Determine URL and method based on form mode
         var url, method;
         var memoId = $('#memo_id').val();
@@ -293,6 +318,14 @@ $(document).ready(function() {
             headers: {
                 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
             },
+=======
+        $.ajax({
+            url: "{{ action([\Modules\Essentials\Http\Controllers\MemoController::class, 'store']) }}",
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+>>>>>>> 8bb22bf (Implement corporate memos system)
             success: function(response) {
                 if (response.success) {
                     $('#compose_memo_modal').modal('hide');
@@ -303,6 +336,7 @@ $(document).ready(function() {
                 }
             },
             error: function(xhr) {
+<<<<<<< HEAD
                 console.error('Send memo error:', xhr);
                 var errorMessage = 'An error occurred while sending the memo.';
                 if (xhr.responseJSON && xhr.responseJSON.message) {
@@ -320,11 +354,15 @@ $(document).ready(function() {
             complete: function() {
                 // Re-enable submit button
                 submitBtn.prop('disabled', false).html(originalText);
+=======
+                toastr.error('An error occurred while sending the memo.');
+>>>>>>> 8bb22bf (Implement corporate memos system)
             }
         });
     });
 
     $('#save_draft_btn').click(function() {
+<<<<<<< HEAD
         // Save TinyMCE content before processing
         if (tinymce.get('memo_body')) {
             tinymce.triggerSave();
@@ -358,6 +396,18 @@ $(document).ready(function() {
             headers: {
                 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
             },
+=======
+        tinymce.triggerSave();
+        
+        var formData = new FormData($('#compose_memo_form')[0]);
+        
+        $.ajax({
+            url: "{{ action([\Modules\Essentials\Http\Controllers\MemoController::class, 'store']) }}",
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+>>>>>>> 8bb22bf (Implement corporate memos system)
             success: function(response) {
                 if (response.success) {
                     $('#compose_memo_modal').modal('hide');
@@ -368,6 +418,7 @@ $(document).ready(function() {
                 }
             },
             error: function(xhr) {
+<<<<<<< HEAD
                 console.error('Save draft error:', xhr);
                 var errorMessage = 'An error occurred while saving the draft.';
                 if (xhr.responseJSON && xhr.responseJSON.message) {
@@ -385,10 +436,14 @@ $(document).ready(function() {
             complete: function() {
                 // Re-enable save draft button
                 saveBtn.prop('disabled', false).html(originalText);
+=======
+                toastr.error('An error occurred while saving the draft.');
+>>>>>>> 8bb22bf (Implement corporate memos system)
             }
         });
     });
 
+<<<<<<< HEAD
     // Handle view memo button click
     $(document).on('click', '.view-memo', function() {
         var memo_id = $(this).data('id');
@@ -396,18 +451,26 @@ $(document).ready(function() {
         
         // Disable button to prevent multiple clicks
         $button.prop('disabled', true);
+=======
+    $(document).on('click', '.view-memo', function() {
+        var memo_id = $(this).data('id');
+>>>>>>> 8bb22bf (Implement corporate memos system)
         
         $.ajax({
             url: "{{ action([\Modules\Essentials\Http\Controllers\MemoController::class, 'show'], '') }}/" + memo_id,
             type: 'GET',
+<<<<<<< HEAD
             headers: {
                 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
             },
+=======
+>>>>>>> 8bb22bf (Implement corporate memos system)
             success: function(response) {
                 $('#view_memo_content').html(response);
                 $('#view_memo_modal').modal('show');
             },
             error: function(xhr) {
+<<<<<<< HEAD
                 console.error('View memo error:', xhr);
                 var errorMessage = 'Error loading memo details.';
                 
@@ -424,10 +487,14 @@ $(document).ready(function() {
             complete: function() {
                 // Re-enable button
                 $button.prop('disabled', false);
+=======
+                toastr.error('Error loading memo details.');
+>>>>>>> 8bb22bf (Implement corporate memos system)
             }
         });
     });
 
+<<<<<<< HEAD
     $(document).on('click', '.edit-memo', function() {
         var memo_id = $(this).data('id');
         
@@ -502,6 +569,8 @@ $(document).ready(function() {
         $('#bcc_recipients').val(bccRecipients).trigger('change');
     }
 
+=======
+>>>>>>> 8bb22bf (Implement corporate memos system)
     $(document).on('click', '.delete-memo', function() {
         var memo_id = $(this).data('id');
         

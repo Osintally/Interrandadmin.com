@@ -8,8 +8,11 @@ use App\Utils\NotificationUtil;
 use App\Utils\Util;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+<<<<<<< HEAD
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+=======
+>>>>>>> 8bb22bf (Implement corporate memos system)
 use Illuminate\Support\Facades\Storage;
 use Modules\Essentials\Entities\Memo;
 use Modules\Essentials\Entities\MemoRecipient;
@@ -52,6 +55,7 @@ class MemoController extends Controller
             return DataTables::of($memos)
                 ->addColumn('action', function($memo) use ($user_id) {
                     $actions = '<div class="btn-group">';
+<<<<<<< HEAD
                     
                     // View button - always available for authorized users
                     $actions .= '<button class="btn btn-xs btn-primary view-memo" data-id="'.$memo->id.'" title="View Memo">';
@@ -73,6 +77,16 @@ class MemoController extends Controller
                         $actions .= '</button>';
                     }
                     
+=======
+                    $actions .= '<button class="btn btn-xs btn-primary view-memo" data-id="'.$memo->id.'"><i class="fa fa-eye"></i></button>';
+                    
+                    if ($memo->sender_id == $user_id) {
+                        if ($memo->status == 'draft') {
+                            $actions .= '<button class="btn btn-xs btn-info edit-memo" data-id="'.$memo->id.'"><i class="fa fa-edit"></i></button>';
+                        }
+                        $actions .= '<button class="btn btn-xs btn-danger delete-memo" data-id="'.$memo->id.'"><i class="fa fa-trash"></i></button>';
+                    }
+>>>>>>> 8bb22bf (Implement corporate memos system)
                     $actions .= '</div>';
                     return $actions;
                 })
@@ -171,7 +185,10 @@ class MemoController extends Controller
             abort(403, 'Unauthorized access.');
         }
 
+<<<<<<< HEAD
         // Mark memo as read for the current user if they are a recipient
+=======
+>>>>>>> 8bb22bf (Implement corporate memos system)
         $recipient = $memo->recipients()->where('user_id', $user_id)->first();
         if ($recipient && !$recipient->is_read) {
             $recipient->is_read = true;
@@ -179,12 +196,18 @@ class MemoController extends Controller
             $recipient->save();
         }
 
+<<<<<<< HEAD
         // Log the memo view activity
+=======
+>>>>>>> 8bb22bf (Implement corporate memos system)
         activity()
             ->performedOn($memo)
             ->log('memo_viewed');
 
+<<<<<<< HEAD
         // Return appropriate view based on request type
+=======
+>>>>>>> 8bb22bf (Implement corporate memos system)
         if (request()->ajax()) {
             return view('essentials::memos.show_modal', compact('memo'));
         }
@@ -197,7 +220,11 @@ class MemoController extends Controller
         $business_id = request()->session()->get('user.business_id');
         $user_id = request()->session()->get('user.id');
         
+<<<<<<< HEAD
         $memo = Memo::with(['recipients.user', 'attachments'])
+=======
+        $memo = Memo::with(['recipients', 'attachments'])
+>>>>>>> 8bb22bf (Implement corporate memos system)
                    ->where('business_id', $business_id)
                    ->where('sender_id', $user_id)
                    ->where('status', 'draft')
@@ -305,13 +332,18 @@ class MemoController extends Controller
                               ->orWhere('last_name', 'like', '%'.$term.'%')
                               ->orWhere('username', 'like', '%'.$term.'%');
                     })
+<<<<<<< HEAD
                     ->select('id', DB::raw("CONCAT(COALESCE(surname, ''),' ',COALESCE(first_name, ''),' ',COALESCE(last_name,'')) as text"))
+=======
+                    ->select('id', \DB::raw("CONCAT(COALESCE(surname, ''),' ',COALESCE(first_name, ''),' ',COALESCE(last_name,'')) as text"))
+>>>>>>> 8bb22bf (Implement corporate memos system)
                     ->limit(20)
                     ->get();
 
         return response()->json(['results' => $users]);
     }
 
+<<<<<<< HEAD
     /**
      * Check if the current user has access to view the memo
      * 
@@ -322,11 +354,18 @@ class MemoController extends Controller
     private function checkMemoAccess($memo, $user_id)
     {
         // Allow access if user is the sender
+=======
+    private function checkMemoAccess($memo, $user_id)
+    {
+>>>>>>> 8bb22bf (Implement corporate memos system)
         if ($memo->sender_id == $user_id) {
             return true;
         }
         
+<<<<<<< HEAD
         // Allow access if user is a recipient (to, cc, or bcc)
+=======
+>>>>>>> 8bb22bf (Implement corporate memos system)
         if ($memo->recipients()->where('user_id', $user_id)->exists()) {
             return true;
         }
@@ -432,7 +471,11 @@ class MemoController extends Controller
                         $recipient->user
                     );
                 } catch (\Exception $e) {
+<<<<<<< HEAD
                     Log::error('Failed to send memo notification: ' . $e->getMessage());
+=======
+                    \Log::error('Failed to send memo notification: ' . $e->getMessage());
+>>>>>>> 8bb22bf (Implement corporate memos system)
                 }
             }
         }
