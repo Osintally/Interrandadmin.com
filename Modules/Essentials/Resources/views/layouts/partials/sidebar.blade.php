@@ -21,9 +21,9 @@
 				<span class="title"> @lang('essentials::lang.document') </span>
 			</a>
 		</li>
-        <li class="{{ ($request->segment(2) == 'document' && $request->get('type') == 'memos') ? 'active active-sub' : '' }}">
-            <a href="{{action([\Modules\Essentials\Http\Controllers\DocumentController::class, 'index']) .'?type=memos'}}">
-                <i class="fa fa-envelope-open"></i>
+        <li class="{{ $request->segment(2) == 'memos' ? 'active active-sub' : '' }}">
+            <a href="{{action([\Modules\Essentials\Http\Controllers\MemoController::class, 'index'])}}">
+                <i class="fas fa-envelope"></i>
                 <span class="title">
                     @lang('essentials::lang.memos')
                 </span>

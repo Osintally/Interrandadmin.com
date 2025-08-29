@@ -13,7 +13,14 @@ Route::middleware('web', 'authh', 'auth', 'SetSessionData', 'language', 'timezon
 
         Route::get('/', [Modules\Essentials\Http\Controllers\EssentialsController::class, 'index']);
 
-        //document controller
+        //memo controller
+        Route::resource('memos', 'Modules\Essentials\Http\Controllers\MemoController');
+        Route::post('memos/{id}/send', [Modules\Essentials\Http\Controllers\MemoController::class, 'send'])->name('memos.send');
+        Route::get('memos/{id}/attachments/{attachment_id}', [Modules\Essentials\Http\Controllers\MemoController::class, 'downloadAttachment'])->name('memos.download_attachment');
+        Route::post('memos/{id}/mark-read', [Modules\Essentials\Http\Controllers\MemoController::class, 'markAsRead'])->name('memos.mark_read');
+        Route::get('users/search', [Modules\Essentials\Http\Controllers\MemoController::class, 'searchUsers'])->name('users.search');
+        
+        //document controller (excluding memos)
         Route::resource('document', 'Modules\Essentials\Http\Controllers\DocumentController')->only(['index', 'store', 'destroy', 'show']);
         Route::get('document/download/{id}', [Modules\Essentials\Http\Controllers\DocumentController::class, 'download']);
 
