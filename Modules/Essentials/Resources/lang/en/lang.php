@@ -324,7 +324,10 @@ return [
     'version_info' => 'Essentials and HRM module version - <code> :version </code>',
     'corporate_memos' => 'Corporate Memos',
     'compose_memo' => 'Compose Memo',
+<<<<<<< HEAD
     'edit_memo' => 'Edit Memo',
+=======
+>>>>>>> 8bb22bf (Implement corporate memos system)
     'to' => 'To',
     'cc' => 'CC',
     'bcc' => 'BCC',
