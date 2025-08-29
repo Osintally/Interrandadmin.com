@@ -10,7 +10,7 @@ class CreateMemoAttachmentsTable extends Migration
     {
         Schema::create('essentials_memo_attachments', function (Blueprint $table) {
             $table->bigIncrements('id');
-            $table->unsignedBigInteger('memo_id');
+            $table->bigInteger('memo_id')->unsigned();
             $table->string('filename');
             $table->string('storage_path');
             $table->string('mime_type');

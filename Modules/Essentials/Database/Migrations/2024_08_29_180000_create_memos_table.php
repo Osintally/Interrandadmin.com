@@ -10,10 +10,10 @@ class CreateMemosTable extends Migration
     {
         Schema::create('essentials_memos', function (Blueprint $table) {
             $table->bigIncrements('id');
-            $table->unsignedInteger('business_id');
+            $table->integer('business_id')->unsigned();
             $table->string('subject');
             $table->longText('body');
-            $table->unsignedInteger('sender_id');
+            $table->integer('sender_id')->unsigned();
             $table->enum('status', ['draft', 'sent', 'archived'])->default('draft');
             $table->timestamps();
             

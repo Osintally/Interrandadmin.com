@@ -10,8 +10,8 @@ class CreateMemoRecipientsTable extends Migration
     {
         Schema::create('essentials_memo_recipients', function (Blueprint $table) {
             $table->bigIncrements('id');
-            $table->unsignedBigInteger('memo_id');
-            $table->unsignedInteger('user_id');
+            $table->bigInteger('memo_id')->unsigned();
+            $table->integer('user_id')->unsigned();
             $table->enum('recipient_type', ['to', 'cc', 'bcc']);
             $table->boolean('is_read')->default(false);
             $table->timestamp('read_at')->nullable();
