@@ -324,6 +324,7 @@ return [
     'version_info' => 'Essentials and HRM module version - <code> :version </code>',
     'corporate_memos' => 'Corporate Memos',
     'compose_memo' => 'Compose Memo',
+    'edit_memo' => 'Edit Memo',
     'to' => 'To',
     'cc' => 'CC',
     'bcc' => 'BCC',

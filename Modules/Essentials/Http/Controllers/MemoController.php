@@ -8,6 +8,8 @@ use App\Utils\NotificationUtil;
 use App\Utils\Util;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Modules\Essentials\Entities\Memo;
 use Modules\Essentials\Entities\MemoRecipient;
@@ -179,7 +181,7 @@ class MemoController extends Controller
         $business_id = request()->session()->get('user.business_id');
         $user_id = request()->session()->get('user.id');
         
-        $memo = Memo::with(['recipients', 'attachments'])
+        $memo = Memo::with(['recipients.user', 'attachments'])
                    ->where('business_id', $business_id)
                    ->where('sender_id', $user_id)
                    ->where('status', 'draft')
@@ -287,7 +289,7 @@ class MemoController extends Controller
                               ->orWhere('last_name', 'like', '%'.$term.'%')
                               ->orWhere('username', 'like', '%'.$term.'%');
                     })
-                    ->select('id', \DB::raw("CONCAT(COALESCE(surname, ''),' ',COALESCE(first_name, ''),' ',COALESCE(last_name,'')) as text"))
+                    ->select('id', DB::raw("CONCAT(COALESCE(surname, ''),' ',COALESCE(first_name, ''),' ',COALESCE(last_name,'')) as text"))
                     ->limit(20)
                     ->get();
 
@@ -405,7 +407,7 @@ class MemoController extends Controller
                         $recipient->user
                     );
                 } catch (\Exception $e) {
-                    \Log::error('Failed to send memo notification: ' . $e->getMessage());
+                    Log::error('Failed to send memo notification: ' . $e->getMessage());
                 }
             }
         }

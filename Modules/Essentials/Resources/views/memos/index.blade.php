@@ -47,6 +47,8 @@
             </div>
             <form id="compose_memo_form" enctype="multipart/form-data">
                 @csrf
+                <input type="hidden" name="_method" id="form_method" value="POST">
+                <input type="hidden" name="memo_id" id="memo_id" value="">
                 <div class="modal-body">
                     <div class="row">
                         <div class="col-md-12">
@@ -155,12 +157,21 @@ $(document).ready(function() {
     });
 
     $('#compose_memo_btn').click(function() {
-        $('#compose_memo_form')[0].reset();
-        $('#to_recipients, #cc_recipients, #bcc_recipients').val(null).trigger('change');
-        tinymce.get('memo_body').setContent('');
-        $('#attachment_preview').empty();
+        resetMemoForm();
+        $('.modal-title').text('@lang("essentials::lang.compose_memo")');
+        $('#form_method').val('POST');
+        $('#memo_id').val('');
         $('#compose_memo_modal').modal('show');
     });
+    
+    function resetMemoForm() {
+        $('#compose_memo_form')[0].reset();
+        $('#to_recipients, #cc_recipients, #bcc_recipients').val(null).trigger('change');
+        if (tinymce.get('memo_body')) {
+            tinymce.get('memo_body').setContent('');
+        }
+        $('#attachment_preview').empty();
+    }
 
     $('#memo_attachments').change(function() {
         var files = this.files;
@@ -179,15 +190,56 @@ $(document).ready(function() {
         e.preventDefault();
         tinymce.triggerSave();
         
+        // Validate required fields
+        var requiredFields = ['subject', 'body'];
+        var isValid = true;
+        
+        requiredFields.forEach(function(field) {
+            var value = $('[name="' + field + '"]').val();
+            if (!value || value.trim() === '') {
+                toastr.error(field.charAt(0).toUpperCase() + field.slice(1) + ' is required.');
+                isValid = false;
+            }
+        });
+        
+        if ($('#to_recipients').val() === null || $('#to_recipients').val().length === 0) {
+            toastr.error('At least one recipient is required.');
+            isValid = false;
+        }
+        
+        if (!isValid) {
+            return false;
+        }
+        
         var formData = new FormData(this);
         formData.append('send', '1');
         
+        // Determine URL and method based on form mode
+        var url, method;
+        var memoId = $('#memo_id').val();
+        
+        if (memoId) {
+            url = "{{ action([\Modules\Essentials\Http\Controllers\MemoController::class, 'update'], '') }}/" + memoId;
+            method = 'POST'; // Laravel handles PUT via _method field
+        } else {
+            url = "{{ action([\Modules\Essentials\Http\Controllers\MemoController::class, 'store']) }}";
+            method = 'POST';
+        }
+        
+        // Disable submit button to prevent double submission
+        var submitBtn = $(this).find('button[type="submit"]');
+        var originalText = submitBtn.html();
+        submitBtn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Sending...');
+        
         $.ajax({
-            url: "{{ action([\Modules\Essentials\Http\Controllers\MemoController::class, 'store']) }}",
-            type: 'POST',
+            url: url,
+            type: method,
             data: formData,
             processData: false,
             contentType: false,
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            },
             success: function(response) {
                 if (response.success) {
                     $('#compose_memo_modal').modal('hide');
@@ -198,7 +250,18 @@ $(document).ready(function() {
                 }
             },
             error: function(xhr) {
-                toastr.error('An error occurred while sending the memo.');
+                var errorMessage = 'An error occurred while sending the memo.';
+                if (xhr.responseJSON && xhr.responseJSON.message) {
+                    errorMessage = xhr.responseJSON.message;
+                } else if (xhr.responseJSON && xhr.responseJSON.errors) {
+                    var errors = xhr.responseJSON.errors;
+                    errorMessage = Object.values(errors).flat().join(', ');
+                }
+                toastr.error(errorMessage);
+            },
+            complete: function() {
+                // Re-enable submit button
+                submitBtn.prop('disabled', false).html(originalText);
             }
         });
     });
@@ -208,12 +271,32 @@ $(document).ready(function() {
         
         var formData = new FormData($('#compose_memo_form')[0]);
         
+        // Determine URL and method based on form mode
+        var url, method;
+        var memoId = $('#memo_id').val();
+        
+        if (memoId) {
+            url = "{{ action([\Modules\Essentials\Http\Controllers\MemoController::class, 'update'], '') }}/" + memoId;
+            method = 'POST'; // Laravel handles PUT via _method field
+        } else {
+            url = "{{ action([\Modules\Essentials\Http\Controllers\MemoController::class, 'store']) }}";
+            method = 'POST';
+        }
+        
+        // Disable save draft button
+        var saveBtn = $(this);
+        var originalText = saveBtn.html();
+        saveBtn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Saving...');
+        
         $.ajax({
-            url: "{{ action([\Modules\Essentials\Http\Controllers\MemoController::class, 'store']) }}",
-            type: 'POST',
+            url: url,
+            type: method,
             data: formData,
             processData: false,
             contentType: false,
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            },
             success: function(response) {
                 if (response.success) {
                     $('#compose_memo_modal').modal('hide');
@@ -224,7 +307,18 @@ $(document).ready(function() {
                 }
             },
             error: function(xhr) {
-                toastr.error('An error occurred while saving the draft.');
+                var errorMessage = 'An error occurred while saving the draft.';
+                if (xhr.responseJSON && xhr.responseJSON.message) {
+                    errorMessage = xhr.responseJSON.message;
+                } else if (xhr.responseJSON && xhr.responseJSON.errors) {
+                    var errors = xhr.responseJSON.errors;
+                    errorMessage = Object.values(errors).flat().join(', ');
+                }
+                toastr.error(errorMessage);
+            },
+            complete: function() {
+                // Re-enable save draft button
+                saveBtn.prop('disabled', false).html(originalText);
             }
         });
     });
@@ -244,6 +338,70 @@ $(document).ready(function() {
             }
         });
     });
+
+    $(document).on('click', '.edit-memo', function() {
+        var memo_id = $(this).data('id');
+        
+        $.ajax({
+            url: "{{ action([\Modules\Essentials\Http\Controllers\MemoController::class, 'edit'], '') }}/" + memo_id,
+            type: 'GET',
+            success: function(response) {
+                if (response.success) {
+                    var memo = response.memo;
+                    var users = response.users;
+                    
+                    // Reset form first
+                    resetMemoForm();
+                    
+                    // Set form to edit mode
+                    $('.modal-title').text('@lang("essentials::lang.edit_memo")');
+                    $('#form_method').val('PUT');
+                    $('#memo_id').val(memo.id);
+                    
+                    // Populate form fields
+                    $('[name="subject"]').val(memo.subject);
+                    if (tinymce.get('memo_body')) {
+                        tinymce.get('memo_body').setContent(memo.body);
+                    }
+                    
+                    // Populate recipients
+                    populateRecipients(memo.recipients);
+                    
+                    $('#compose_memo_modal').modal('show');
+                } else {
+                    toastr.error(response.msg || 'Error loading memo for editing.');
+                }
+            },
+            error: function(xhr) {
+                toastr.error('Error loading memo for editing.');
+            }
+        });
+    });
+    
+    function populateRecipients(recipients) {
+        var toRecipients = [];
+        var ccRecipients = [];
+        var bccRecipients = [];
+        
+        recipients.forEach(function(recipient) {
+            var option = new Option(recipient.user.first_name + ' ' + recipient.user.last_name, recipient.user.id, true, true);
+            
+            if (recipient.recipient_type === 'to') {
+                $('#to_recipients').append(option);
+                toRecipients.push(recipient.user.id);
+            } else if (recipient.recipient_type === 'cc') {
+                $('#cc_recipients').append(option);
+                ccRecipients.push(recipient.user.id);
+            } else if (recipient.recipient_type === 'bcc') {
+                $('#bcc_recipients').append(option);
+                bccRecipients.push(recipient.user.id);
+            }
+        });
+        
+        $('#to_recipients').val(toRecipients).trigger('change');
+        $('#cc_recipients').val(ccRecipients).trigger('change');
+        $('#bcc_recipients').val(bccRecipients).trigger('change');
+    }
 
     $(document).on('click', '.delete-memo', function() {
         var memo_id = $(this).data('id');
