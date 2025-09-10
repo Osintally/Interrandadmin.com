@@ -14,7 +14,8 @@ Route::middleware('web', 'authh', 'auth', 'SetSessionData', 'language', 'timezon
         Route::get('/', [Modules\Essentials\Http\Controllers\EssentialsController::class, 'index']);
 
         //memo controller
-        Route::resource('memos', 'Modules\Essentials\Http\Controllers\MemoController');
+        Route::resource('memos', \Modules\Essentials\Http\Controllers\MemoController::class);
+        Route::get('memos/{memo}/edit', [\Modules\Essentials\Http\Controllers\MemoController::class, 'edit'])->name('memos.edit');
         Route::post('memos/{id}/send', [Modules\Essentials\Http\Controllers\MemoController::class, 'send'])->name('memos.send');
         Route::get('memos/{id}/attachments/{attachment_id}', [Modules\Essentials\Http\Controllers\MemoController::class, 'downloadAttachment'])->name('memos.download_attachment');
         Route::post('memos/{id}/mark-read', [Modules\Essentials\Http\Controllers\MemoController::class, 'markAsRead'])->name('memos.mark_read');

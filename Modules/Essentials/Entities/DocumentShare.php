@@ -26,7 +26,7 @@ class DocumentShare extends Model
             'msg' => __('essentials::lang.document_share_notification', ['document_name' => $data['document_name'], 'shared_by' => $data['shared_by_name']]),
             'title' => __('essentials::lang.document_shared'),
             'link' => $data['document_type'] != 'memos' ? action([\Modules\Essentials\Http\Controllers\DocumentController::class, 'index']) :
-            action([\Modules\Essentials\Http\Controllers\DocumentController::class, 'index']).'?type=memos',
+            action([\Modules\Essentials\Http\Controllers\MemoController::class, 'index']),
             'icon' => $data['document_type'] != 'memos' ? 'fas fa-file bg-green' : 'fas fa-envelope-open bg-green',
         ];
     }
