@@ -20,7 +20,7 @@ Route::middleware(['web', 'auth', 'SetSessionData', 'language', 'timezone', 'Adm
         Route::post('memos/{memo}/send', [Modules\Essentials\Http\Controllers\MemoController::class, 'send'])->name('memos.send');
         Route::get('memos/{memo}/attachments/{attachment_id}', [Modules\Essentials\Http\Controllers\MemoController::class, 'downloadAttachment'])->name('memos.download_attachment');
         Route::post('memos/{memo}/mark-read', [Modules\Essentials\Http\Controllers\MemoController::class, 'markAsRead'])->name('memos.mark_read');
-        Route::get('users/search', [Modules\Essentials\Http\Controllers\MemoController::class, 'searchUsers'])->name('users.search');
+        Route::get('users/search', gi [Modules\Essentials\Http\Controllers\MemoController::class, 'searchUsers'])->name('users.search');
 
         // Document routes
         Route::resource('document', Modules\Essentials\Http\Controllers\DocumentController::class)->only(['index', 'store', 'destroy', 'show']);
