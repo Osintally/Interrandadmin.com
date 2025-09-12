@@ -1,0 +1,182 @@
+# Performance Management System - Installation Guide
+
+## Prerequisites
+
+- Laravel 9.5+
+- PHP 8.0+
+- SQLite (or MySQL/PostgreSQL if preferred)
+- Composer
+
+## Installation Steps
+
+### 1. Database Setup
+
+Create the SQLite database file:
+```bash
+touch database/database.sqlite
+```
+
+Update your `.env` file:
+```env
+DB_CONNECTION=sqlite
+DB_DATABASE=/absolute/path/to/your/project/database/database.sqlite
+```
+
+For MySQL/PostgreSQL, use standard Laravel database configuration.
+
+### 2. Migration Files
+
+Copy all migration files to `database/migrations/`:
+- `create_departments_table.php`
+- `create_employees_table.php` 
+- `create_performance_reviews_table.php`
+- `create_templates_table.php`
+
+### 3. Model Files
+
+Copy all model files to `app/Models/`:
+- `Department.php`
+- `Employee.php`
+- `PerformanceReview.php`
+- `Template.php`
+
+### 4. Controller Files
+
+Copy all controller files to `app/Http/Controllers/`:
+- `DashboardController.php`
+- `EmployeeController.php`
+- `PerformanceController.php`
+- `TemplateController.php`
+- `AnalyticsController.php`
+- `LeaderboardController.php`
+- `ReportController.php`
+
+### 5. Request Files
+
+Copy form request files to `app/Http/Requests/`:
+- `EmployeeRequest.php`
+- `PerformanceReviewRequest.php`
+- `TemplateRequest.php`
+
+### 6. View Files
+
+Copy view files to `resources/views/`:
+```
+resources/views/
+├── layouts/
+│   └── app.blade.php
+├── dashboard.blade.php
+├── employees/
+│   └── index.blade.php
+└── performance/
+    └── edit.blade.php
+```
+
+### 7. Asset Files
+
+Copy asset files:
+- `public/css/dashboard.css`
+- `public/js/dashboard.js`
+
+### 8. Seeder Files
+
+Copy seeder files to `database/seeders/`:
+- `DatabaseSeeder.php`
+- `DepartmentSeeder.php`
+- `EmployeeSeeder.php`
+- `TemplateSeeder.php`
+- `PerformanceReviewSeeder.php`
+
+### 9. Routes
+
+Replace the contents of `routes/web.php` with the provided routes file.
+
+### 10. Run Migrations and Seeds
+
+```bash
+php artisan migrate
+php artisan db:seed
+```
+
+### 11. Storage Setup
+
+Create storage link for file uploads:
+```bash
+php artisan storage:link
+```
+
+### 12. Permissions
+
+Ensure storage and cache directories are writable:
+```bash
+chmod -R 775 storage bootstrap/cache
+```
+
+## Default Login
+
+The system doesn't include authentication by default. You'll need to implement Laravel's built-in authentication or integrate with your existing auth system.
+
+## Configuration Notes
+
+### Database Considerations
+
+The SQLite setup works well for development and small deployments. For production with multiple concurrent users, consider PostgreSQL or MySQL.
+
+### File Uploads
+
+Avatar uploads are stored in `storage/app/public/avatars/`. Ensure this directory exists and is writable.
+
+### Performance
+
+The current implementation loads all data in memory. For large datasets (>1000 employees), implement pagination and database indexing optimizations.
+
+### Security
+
+- Add proper authorization middleware to all routes
+- Implement role-based access control
+- Validate file uploads more strictly
+- Add CSRF protection to AJAX requests
+
+## Limitations
+
+This implementation has several limitations:
+
+1. **Authentication**: No user authentication system included
+2. **Authorization**: Basic permission checks only - needs role-based access control
+3. **File Handling**: Basic avatar upload only - no document attachment system
+4. **API**: No comprehensive API for mobile apps or integrations
+5. **Notifications**: No email/SMS notification system for review deadlines
+6. **Reporting**: PDF generation is mocked - needs real PDF library integration
+7. **Analytics**: Basic analytics only - advanced reporting requires business intelligence tools
+8. **Multi-tenancy**: Single organization only - no support for multiple companies
+
+## Recommended Enhancements
+
+Before production use, consider implementing:
+
+- User authentication and role management
+- Advanced security measures
+- Comprehensive test suite
+- API endpoints for mobile integration
+- Email notification system
+- Advanced reporting with PDF generation
+- Data export/import functionality
+- Audit logging
+- Multi-language support
+- Performance optimizations for large datasets
+
+## Troubleshooting
+
+### Common Issues
+
+**Migration Errors**: Ensure database connection is properly configured and the database file exists.
+
+**Permission Denied**: Check file permissions on storage directories.
+
+**Missing Dependencies**: Run `composer install` to ensure all PHP dependencies are available.
+
+**JavaScript Errors**: Verify Chart.js is loading properly from CDN.
+
+**CSS Not Loading**: Check that asset files are in the correct public directory paths.
+
+This system provides a solid foundation but will require additional development for production use in most organizational contexts.

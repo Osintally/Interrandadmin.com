@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Attendance Organizer</title>
+  <style>
+    :root{
+      --bg:#0b1220; --panel:#131b2e; --muted:#94a3b8; --text:#e5e7eb; --accent:#60a5fa; --accent-2:#34d399; --warn:#f59e0b; --danger:#f87171;
+    }
+    html,body{height:100%;}
+    body{margin:0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; background:var(--bg); color:var(--text);}    
+    .wrap{max-width:1100px; margin:32px auto; padding:0 16px;}
+    header{display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:20px;}
+    h1{font-size:clamp(1.3rem, 1.2rem + 1vw, 2rem); margin:0; letter-spacing:.3px;}
+    .card{background:var(--panel); border:1px solid rgba(255,255,255,.06); border-radius:16px; box-shadow:0 10px 30px rgba(0,0,0,.25);}
+    .section{padding:16px 18px;}
+    .grid{display:grid; grid-template-columns:repeat(12,1fr); gap:12px;}
+    .grid > *{grid-column:span 12;}
+    @media(min-width:800px){ .grid-2 > *{grid-column:span 6;} .grid-3 > *{grid-column:span 4;} }
+
+    label{display:block; font-size:.86rem; color:var(--muted); margin-bottom:6px;}
+    input[type="file"], input[type="time"], input[type="number"]{
+      width:100%; background:#0f172a; color:var(--text); border:1px solid rgba(255,255,255,.08); border-radius:12px; padding:10px 12px; outline:none;
+    }
+    input[type="time"], input[type="number"]{height:40px;}
+
+    .btns{display:flex; flex-wrap:wrap; gap:10px;}
+    .btn{appearance:none; border:1px solid transparent; background:var(--accent); color:#081018; padding:10px 14px; border-radius:12px; font-weight:600; cursor:pointer;}
+    .btn.secondary{background:#0f172a; color:var(--text); border-color:rgba(255,255,255,.12);} 
+    .btn.success{background:var(--accent-2); color:#062016;}
+    .btn.warn{background:var(--warn); color:#1f1403;}
+
+    .hint{font-size:.85rem; color:var(--muted);}    
+    .table-wrap{overflow:auto; border-top:1px solid rgba(255,255,255,.06);}    
+    table{width:100%; border-collapse:collapse; font-size:.92rem;}
+    th, td{padding:10px 12px; border-bottom:1px solid rgba(255,255,255,.06); text-align:left; white-space:nowrap;}
+    th{position:sticky; top:0; background:linear-gradient(#172036, #131b2e);}
+    .pill{display:inline-block; padding:2px 8px; border-radius:999px; font-size:.78rem; font-weight:700;}
+    .pill.present{background:rgba(52,211,153,.15); color:var(--accent-2);} 
+    .pill.absent{background:rgba(248,113,113,.15); color:var(--danger);} 
+    .pill.late{background:rgba(245,158,11,.15); color:var(--warn);} 
+
+    footer{margin:24px 0; color:var(--muted); font-size:.9rem;}
+    .note{font-size:.85rem; color:var(--muted);}
+    .tag{display:inline-flex; gap:6px; align-items:center; padding:6px 10px; border-radius:999px; background:#0f172a; border:1px solid rgba(255,255,255,.08);} 
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>Attendance Organizer · <span class="tag"><span>Mon–Fri</span><span>21 days</span></span></h1>
+      <div class="hint">Upload <code>user.dat</code> and one or more attendance <code>.dat</code> files</div>
+    </header>
+
+    <div class="card section">
+      <div class="grid grid-3">
+        <div>
+          <label>User mapping file (user.dat)</label>
+          <input id="userFile" type="file" accept=".dat,.txt" />
+        </div>
+        <div>
+          <label>Attendance logs (.dat) – you can select multiple</label>
+          <input id="attFiles" type="file" accept=".dat,.txt" multiple />
+        </div>
+        <div>
+          <label>&nbsp;</label>
+          <div class="btns">
+            <button id="processBtn" class="btn">Process Attendance</button>
+            <button id="clearBtn" class="btn secondary">Clear</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-3" style="margin-top:10px;">
+        <div>
+          <label>Official start time</label>
+          <input id="startTime" type="time" value="08:00" />
+          <div class="hint">Used with grace minutes to flag lateness</div>
+        </div>
+        <div>
+          <label>Grace minutes</label>
+          <input id="graceMin" type="number" value="15" min="0" />
+        </div>
+        <div>
+          <label>End of work time</label>
+          <input id="endTime" type="time" value="16:00" />
+          <div class="hint">Clockout before this = Early Leave</div>
+        </div>
+      </div>
+
+      <div class="grid grid-3" style="margin-top:10px;">
+        <div>
+          <label>Working days to generate</label>
+          <input id="workDays" type="number" value="21" min="1" />
+        </div>
+        <div class="btns" style="align-items:flex-end;">
+          <button id="dlDetail" class="btn success" disabled>Download Attendance_Detail CSV</button>
+          <button id="dlSummary" class="btn success" disabled>Download Attendance_Summary CSV</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="status" class="note" style="margin:12px 2px;"></div>
+
+    <div class="card section" id="tables" style="display:none;">
+      <h3 style="margin:4px 0 12px;">Preview</h3>
+      <div class="table-wrap" style="margin-bottom:18px;">
+        <table id="detailTable"></table>
+      </div>
+      <div class="table-wrap">
+        <table id="summaryTable"></table>
+      </div>
+    </div>
+
+    <footer>
+      Tip: previews show first 300 rows. Use the download buttons for full CSVs.
+    </footer>
+  </div>
+
+  <script>
+    const $ = (sel)=>document.querySelector(sel);
+    const userFileEl = $('#userFile');
+    const attFilesEl = $('#attFiles');
+    const processBtn = $('#processBtn');
+    const clearBtn = $('#clearBtn');
+    const startTimeEl = $('#startTime');
+    const graceMinEl = $('#graceMin');
+    const endTimeEl = $('#endTime');
+    const workDaysEl = $('#workDays');
+    const statusEl = $('#status');
+    const tablesWrap = $('#tables');
+    const detailTable = $('#detailTable');
+    const summaryTable = $('#summaryTable');
+    const dlDetailBtn = $('#dlDetail');
+    const dlSummaryBtn = $('#dlSummary');
+
+    let detailRows = [];
+    let summaryRows = [];
+
+    clearBtn.addEventListener('click', ()=>{
+      userFileEl.value=''; attFilesEl.value='';
+      statusEl.textContent=''; tablesWrap.style.display='none';
+      dlDetailBtn.disabled = true; dlSummaryBtn.disabled = true;
+      detailTable.innerHTML=''; summaryTable.innerHTML='';
+    });
+
+    processBtn.addEventListener('click', async ()=>{
+      try{
+        statusEl.textContent = 'Reading files…';
+        const usersTxt = await readFile(userFileEl.files?.[0]);
+        const attTxts = await Promise.all(Array.from(attFilesEl.files||[]).map(readFile));
+        const users = parseUsers(usersTxt||'');
+        const att = parseAttendance(attTxts.join('\n'));
+        if(users.length===0) throw new Error('No users parsed from user.dat');
+        if(att.length===0) throw new Error('No attendance rows parsed');
+
+        const startTime = startTimeEl.value || '08:00';
+        const graceMin = parseInt(graceMinEl.value||'15',10);
+        const endTime = endTimeEl.value || '16:00';
+        const days = parseInt(workDaysEl.value||'21',10);
+
+        const {attendanceByDay, minDate} = computeDailyAttendance(att, users);
+        const calendar = buildBusinessCalendar(minDate, days);
+        const {detail, summary} = buildOutputs(users, attendanceByDay, calendar, startTime, graceMin, endTime);
+
+        detailRows = detail; summaryRows = summary;
+        renderTables(detail.slice(0,300), summary);
+        attachDownloads();
+        tablesWrap.style.display='block';
+        statusEl.textContent = `Processed ${detail.length} daily rows for ${summary.length} users.`;
+      }catch(err){
+        console.error(err); statusEl.textContent = 'Error: ' + err.message;
+      }
+    });
+
+    function readFile(file){
+      return new Promise((resolve)=>{
+        if(!file) return resolve('');
+        const fr = new FileReader();
+        fr.onload = ()=> resolve(String(fr.result||''));
+        fr.readAsText(file);
+      });
+    }
+
+    // Parse user.dat (robust to control chars / variable spacing)
+    function parseUsers(text){
+      // Replace control chars with spaces, then split
+      const cleaned = text.replace(/[\x00-\x1F]/g,' ').replace(/\s+/g,' ').trim();
+      const tokens = cleaned.split(' ');
+      const nameIdPairs = [];
+      // Strategy: find sequences where a name token (letters only) is followed later by a numeric token; pair in order.
+      // Since original file appears as Name … ID … Name … ID, we zip by alternating name and id appearances.
+      const names=[], ids=[];
+      for(const t of tokens){
+        if(/^[A-Za-z]+$/.test(t)) names.push(t);
+        else if(/^\d+$/.test(t)) ids.push(t);
+      }
+      const n = Math.min(names.length, ids.length);
+      for(let i=0;i<n;i++){
+        nameIdPairs.push({UserId: ids[i], Username: names[i]});
+      }
+      // Deduplicate by UserId, keep first username encountered
+      const seen = new Map();
+      for(const r of nameIdPairs){ if(!seen.has(r.UserId)) seen.set(r.UserId, r.Username); }
+      return Array.from(seen, ([UserId, Username])=>({UserId, Username}));
+    }
+
+    // Parse attendance logs: expect lines starting with userId and timestamp
+    function parseAttendance(text){
+      const rows = [];
+      const lines = text.split(/\r?\n/);
+      for(const line of lines){
+        const trimmed = line.trim();
+        if(!trimmed) continue;
+        // Split by any whitespace, take first (UserId) and second (Timestamp)
+        const parts = trimmed.split(/\s+/);
+        if(parts.length < 2) continue;
+        const uid = parts[0];
+        const ts = parts[1] + (parts[2] && parts[2].includes(':') ? ' ' + parts[2] : '');
+        if(!/^\d+$/.test(uid)) continue;
+        const d = new Date(ts.replace('T',' '));
+        if(isNaN(d.getTime())) continue;
+        rows.push({UserId: String(uid), Timestamp: d});
+      }
+      return rows;
+    }
+
+    // Compute min/max per user per date
+    function computeDailyAttendance(att, users){
+      // Union of userIds from both sources
+      const userMap = new Map(users.map(u=>[u.UserId, u.Username]));
+      for(const r of att){ if(!userMap.has(r.UserId)) userMap.set(r.UserId, ''); }
+      const minDate = att.reduce((m,r)=> r.Timestamp < m ? r.Timestamp : m, att[0]?.Timestamp || new Date());
+
+      // Group by userId+date
+      const key = (uid, d)=> uid+'|'+d.toISOString().slice(0,10);
+      const map = new Map();
+      for(const r of att){
+        const day = new Date(r.Timestamp); day.setHours(0,0,0,0);
+        const k = key(r.UserId, day);
+        let o = map.get(k);
+        if(!o) o = {UserId:r.UserId, Date:new Date(day), Clockin:r.Timestamp, Clockout:r.Timestamp};
+        if(r.Timestamp < o.Clockin) o.Clockin = r.Timestamp;
+        if(r.Timestamp > o.Clockout) o.Clockout = r.Timestamp;
+        map.set(k, o);
+      }
+      return {attendanceByDay: map, minDate};
+    }
+
+    // Build N business days (Mon–Fri) from start date
+    function buildBusinessCalendar(startDate, n){
+      const days = [];
+      const d = new Date(startDate); d.setHours(0,0,0,0);
+      while(days.length < n){
+        const wd = d.getDay(); // 0 Sun .. 6 Sat
+        if(wd >= 1 && wd <= 5) days.push(new Date(d));
+        d.setDate(d.getDate()+1);
+      }
+      return days;
+    }
+
+    function timeStr(date){
+      if(!date) return '';
+      const pad = (x)=> String(x).padStart(2,'0');
+      return `${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
+    }
+
+    function buildOutputs(users, attMap, calendar, startTime, graceMin, endTime){
+      // Build thresholds
+      const [sh, sm] = startTime.split(':').map(x=>parseInt(x||'0',10));
+      const lateH = sh; const lateM = sm + graceMin;
+      const lateCutH = lateH + Math.floor(lateM / 60);
+      const lateCutM = lateM % 60;
+      const [eh, em] = endTime.split(':').map(x=>parseInt(x||'0',10));
+
+      // Utility to compare only time of day
+      const isAfter = (dt, h, m)=> dt.getHours()>h || (dt.getHours()===h && dt.getMinutes()>m) || (dt.getHours()===h && dt.getMinutes()===m && dt.getSeconds()>0);
+      const isBefore = (dt, h, m)=> dt.getHours()<h || (dt.getHours()===h && dt.getMinutes()<m) || (dt.getHours()===h && dt.getMinutes()===m && dt.getSeconds()<1);
+
+      const usersSorted = [...users].sort((a,b)=> a.UserId.localeCompare(b.UserId, undefined, {numeric:true}));
+      const detail = [];
+
+      for(const u of usersSorted){
+        for(const day of calendar){
+          const key = u.UserId + '|' + day.toISOString().slice(0,10);
+          const rec = attMap.get(key);
+          if(rec){
+            const clockin = rec.Clockin;
+            const clockout = rec.Clockout;
+            const late = isAfter(clockin, lateCutH, lateCutM);
+            const earlyLeave = isBefore(clockout, eh, em);
+            const hours = (clockout - clockin) / 36e5;
+            detail.push({
+              UserId: u.UserId,
+              Username: u.Username || '',
+              Date: day.toISOString().slice(0,10),
+              WorkingDay: 'Yes',
+              Clockin: clockin.toISOString().replace('T',' ').slice(0,19),
+              Clockout: clockout.toISOString().replace('T',' ').slice(0,19),
+              Late: late ? 'Yes' : 'No',
+              EarlyLeave: earlyLeave ? 'Yes' : 'No',
+              TotalHours: hours.toFixed(2),
+              Status: 'Present'
+            });
+          } else {
+            detail.push({
+              UserId: u.UserId,
+              Username: u.Username || '',
+              Date: day.toISOString().slice(0,10),
+              WorkingDay: 'Yes',
+              Clockin: '',
+              Clockout: '',
+              Late: '',
+              EarlyLeave: '',
+              TotalHours: '',
+              Status: 'Absent'
+            });
+          }
+        }
+      }
+
+      // Build summary
+      const byUser = new Map();
+      for(const r of detail){
+        const k = r.UserId + '|' + r.Username;
+        let o = byUser.get(k);
+        if(!o) o = {UserId:r.UserId, Username:r.Username, Total_Present:0, Total_Absent:0, Total_Late:0, Total_EarlyLeave:0};
+        if(r.Status==='Present'){
+          o.Total_Present++;
+          if(r.Late==='Yes') o.Total_Late++;
+          if(r.EarlyLeave==='Yes') o.Total_EarlyLeave++;
+        } else if(r.Status==='Absent'){
+          o.Total_Absent++;
+        }
+        byUser.set(k,o);
+      }
+
+      const summary = Array.from(byUser.values()).sort((a,b)=> a.UserId.localeCompare(b.UserId, undefined, {numeric:true}));
+      return {detail, summary};
+    }
+
+    function renderTables(detail, summary){
+      // Detail table
+      const dCols = ['UserId','Username','Date','WorkingDay','Clockin','Clockout','Late','EarlyLeave','TotalHours','Status'];
+      detailTable.innerHTML = `<thead><tr>${dCols.map(c=>`<th>${c}</th>`).join('')}</tr></thead>` +
+        '<tbody>' + detail.map(r=>{
+          return `<tr>${dCols.map(c=>{
+            let v = r[c] ?? '';
+            if(c==='Status'){
+              const cls = v==='Present'?'present':'absent';
+              return `<td><span class="pill ${cls}">${v}</span></td>`;
+            }
+            if(c==='Late' && v){
+              return `<td>${v==='Yes'?`<span class="pill late">Late</span>`:'No'}</td>`;
+            }
+            return `<td>${String(v)}</td>`;
+          }).join('')}</tr>`;
+        }).join('') + '</tbody>';
+
+      // Summary table
+      const sCols = ['UserId','Username','Total_Present','Total_Absent','Total_Late','Total_EarlyLeave'];
+      summaryTable.innerHTML = `<thead><tr>${sCols.map(c=>`<th>${c}</th>`).join('')}</tr></thead>` +
+        '<tbody>' + summary.map(r=>`<tr>${sCols.map(c=>`<td>${r[c]}</td>`).join('')}</tr>`).join('') + '</tbody>';
+    }
+
+    function attachDownloads(){
+      dlDetailBtn.disabled = false;
+      dlSummaryBtn.disabled = false;
+      dlDetailBtn.onclick = ()=> downloadCSV('Attendance_Detail.csv', detailRows, ['UserId','Username','Date','WorkingDay','Clockin','Clockout','Late','EarlyLeave','TotalHours','Status']);
+      dlSummaryBtn.onclick = ()=> downloadCSV('Attendance_Summary.csv', summaryRows, ['UserId','Username','Total_Present','Total_Absent','Total_Late','Total_EarlyLeave']);
+    }
+
+    function downloadCSV(filename, rows, columns){
+      const esc = (v)=>{
+        if(v==null) return '';
+        const s = String(v);
+        if(/[",\n]/.test(s)) return '"' + s.replace(/"/g,'""') + '"';
+        return s;
+      };
+      const header = columns.join(',');
+      const lines = rows.map(r=> columns.map(c=> esc(r[c])).join(','));
+      const csv = [header, ...lines].join('\n');
+      const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = filename; a.click();
+      URL.revokeObjectURL(url);
+    }
+  </script>
+</body>
+</html>

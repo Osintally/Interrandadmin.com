@@ -430,7 +430,7 @@ Route::middleware(['setData', 'auth', 'SetSessionData', 'language', 'timezone', 
     Route::resource('account-types', AccountTypeController::class);
 
     //Restaurant module
-    Route::prefix('modules')->group(function () {
+        Route::prefix('modules')->group(function () {
         Route::resource('tables', Restaurant\TableController::class);
         Route::resource('modifiers', Restaurant\ModifierSetsController::class);
 
@@ -452,6 +452,11 @@ Route::middleware(['setData', 'auth', 'SetSessionData', 'language', 'timezone', 
         Route::get('/data/check-staff-pin', [Restaurant\DataController::class, 'checkStaffPin']);
         Route::get('/orders/mark-line-order-as-served/{id}', [Restaurant\OrderController::class, 'markLineOrderAsServed']);
         Route::get('/print-line-order', [Restaurant\OrderController::class, 'printLineOrder']);
+        });
+
+        // Essentials module routes
+        Route::prefix('essentials')->group(function () {
+            Route::resource('memos', 'Modules\Essentials\Http\Controllers\MemoController');
     });
 
     Route::get('bookings/get-todays-bookings', [Restaurant\BookingController::class, 'getTodaysBookings']);

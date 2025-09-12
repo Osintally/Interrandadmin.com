@@ -24,10 +24,10 @@
             </a>
         </li>
 
-        <li class="{{ $request->segment(2) == 'attendance' ? 'active active-sub' : '' }}">
-            <a href="{{action([\Modules\Essentials\Http\Controllers\AttendanceController::class, 'index'])}}">
-                <i class="fa fa-check-square-o"></i>
-                <span class="title">@lang('essentials::lang.attendance')</span>
+        <li class="{{ $request->segment(2) == 'enhanced-attendance' ? 'active active-sub' : '' }}">
+            <a href="{{action([\Modules\Essentials\Http\Controllers\EnhancedAttendanceController::class, 'dashboard'])}}">
+                <i class="fa fa-chart-line"></i>
+                <span class="title">Enhanced Attendance</span>
             </a>
         </li>
         @can('essentials.add_allowance_and_deduction')
