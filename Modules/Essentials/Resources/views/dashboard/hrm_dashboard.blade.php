@@ -97,6 +97,37 @@
                     @lang('essentials::lang.my_payrolls')
                 </a>
             </div>
+            @if ($is_admin)
+            <div class="col-md-4 col-sm-6 col-xs-12 col-custom">
+                @component('components.widget', [
+                    'class' => 'bg-yellow',
+                    'title' => 'Enhanced Attendance System',
+                    'icon' => '<i class="fas fa-clock"></i>',
+                ])
+                    <div class="row">
+                        <div class="col-md-6 text-center">
+                            <a href="/hrm/enhanced-attendance/dashboard" class="btn btn-primary btn-block">
+                                <i class="fas fa-chart-line"></i><br>
+                                Enhanced Dashboard
+                            </a>
+                        </div>
+                        <div class="col-md-6 text-center">
+                            <a href="/hrm/enhanced-attendance/all-users-summary" class="btn btn-info btn-block">
+                                <i class="fas fa-calendar-alt"></i><br>
+                                21-Day Summary
+                            </a>
+                        </div>
+                    </div>
+                    <div class="row" style="margin-top: 10px;">
+                        <div class="col-md-12 text-center">
+                            <a href="/hrm/enhanced-attendance/employee-management" class="btn btn-success btn-block">
+                                <i class="fas fa-users-cog"></i> Employee Management
+                            </a>
+                        </div>
+                    </div>
+                @endcomponent
+            </div>
+            @endif
         </div>
         @if ($is_admin)
             <hr>

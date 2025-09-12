@@ -1,0 +1,806 @@
+@extends('layouts.app')
+
+@section('title', 'Performance Review - ' . $performance->employee->full_name)
+
+@push('styles')
+<style>
+.review-container {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.review-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 30px;
+    border-radius: 15px;
+    margin-bottom: 30px;
+    position: relative;
+    overflow: hidden;
+}
+
+.review-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 200px;
+    height: 200px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 50%;
+    transform: translate(50px, -50px);
+}
+
+.employee-summary {
+    display: flex;
+    align-items: center;
+    gap: 25px;
+    position: relative;
+    z-index: 1;
+}
+
+.employee-avatar-large {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 32px;
+    font-weight: bold;
+    border: 3px solid rgba(255,255,255,0.3);
+    overflow: hidden;
+}
+
+.employee-avatar-large img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.employee-details h1 {
+    margin: 0 0 8px 0;
+    font-size: 28px;
+    font-weight: bold;
+}
+
+.employee-subtitle {
+    font-size: 16px;
+    opacity: 0.9;
+    margin-bottom: 10px;
+}
+
+.review-meta {
+    display: flex;
+    gap: 25px;
+    font-size: 14px;
+    opacity: 0.85;
+}
+
+.header-actions {
+    margin-left: auto;
+    display: flex;
+    gap: 12px;
+}
+
+.status-indicator {
+    display: inline-block;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    margin-bottom: 15px;
+}
+
+.status-draft {
+    background: rgba(251, 191, 36, 0.2);
+    color: #f59e0b;
+    border: 1px solid rgba(251, 191, 36, 0.3);
+}
+
+.status-completed {
+    background: rgba(59, 130, 246, 0.2);
+    color: #3b82f6;
+    border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.status-approved {
+    background: rgba(16, 185, 129, 0.2);
+    color: #10b981;
+    border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.status-rejected {
+    background: rgba(239, 68, 68, 0.2);
+    color: #ef4444;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.content-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 30px;
+}
+
+.main-content {
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+}
+
+.card {
+    background: white;
+    border-radius: 15px;
+    padding: 25px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+}
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.card-title {
+    font-size: 20px;
+    font-weight: 600;
+    color: #1e293b;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.scores-grid {
+    display: grid;
+    gap: 20px;
+}
+
+.score-item {
+    background: #f8fafc;
+    padding: 20px;
+    border-radius: 12px;
+    border-left: 4px solid #667eea;
+}
+
+.score-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.score-label {
+    font-weight: 600;
+    color: #1e293b;
+}
+
+.score-weight {
+    background: #667eea;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 500;
+}
+
+.score-value {
+    font-size: 24px;
+    font-weight: bold;
+    color: #667eea;
+}
+
+.score-stars {
+    display: flex;
+    gap: 4px;
+    margin-top: 8px;
+}
+
+.star {
+    color: #fbbf24;
+    font-size: 16px;
+}
+
+.star.empty {
+    color: #d1d5db;
+}
+
+.overall-score-card {
+    text-align: center;
+    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+    padding: 25px;
+    border-radius: 15px;
+    margin-bottom: 20px;
+}
+
+.score-circle {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    font-weight: bold;
+    margin: 0 auto 15px;
+}
+
+.score-description {
+    font-size: 16px;
+    font-weight: 600;
+    color: #1e293b;
+    margin-bottom: 5px;
+}
+
+.score-breakdown {
+    font-size: 14px;
+    color: #64748b;
+}
+
+.feedback-section {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 15px;
+}
+
+.feedback-label {
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 8px;
+    font-size: 14px;
+}
+
+.feedback-content {
+    color: #4b5563;
+    line-height: 1.6;
+    font-size: 14px;
+}
+
+.feedback-empty {
+    color: #9ca3af;
+    font-style: italic;
+}
+
+.reviewer-info {
+    background: #f8fafc;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.reviewer-header {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.reviewer-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 600;
+    overflow: hidden;
+}
+
+.reviewer-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.reviewer-details h3 {
+    margin: 0 0 4px 0;
+    font-weight: 600;
+    color: #1e293b;
+}
+
+.reviewer-details p {
+    margin: 0;
+    color: #64748b;
+    font-size: 14px;
+}
+
+.review-timeline {
+    border-left: 2px solid #e2e8f0;
+    padding-left: 20px;
+}
+
+.timeline-item {
+    margin-bottom: 15px;
+    position: relative;
+}
+
+.timeline-item::before {
+    content: '';
+    position: absolute;
+    left: -26px;
+    top: 4px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #667eea;
+}
+
+.timeline-date {
+    font-size: 12px;
+    color: #64748b;
+    font-weight: 500;
+}
+
+.timeline-event {
+    font-size: 14px;
+    color: #1e293b;
+    margin-top: 2px;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    padding: 20px;
+    border-top: 1px solid #f1f5f9;
+}
+
+.btn {
+    padding: 12px 24px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    font-weight: 500;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s;
+}
+
+.btn-primary {
+    background: rgba(255,255,255,0.2);
+    color: white;
+    border: 1px solid rgba(255,255,255,0.3);
+}
+
+.btn-primary:hover {
+    background: rgba(255,255,255,0.3);
+    transform: translateY(-1px);
+    color: white;
+}
+
+.btn-success {
+    background: #10b981;
+    color: white;
+}
+
+.btn-success:hover {
+    background: #059669;
+    color: white;
+}
+
+.btn-danger {
+    background: #ef4444;
+    color: white;
+}
+
+.btn-danger:hover {
+    background: #dc2626;
+    color: white;
+}
+
+.btn-outline {
+    background: white;
+    color: #64748b;
+    border: 1px solid #e2e8f0;
+}
+
+.btn-outline:hover {
+    background: #f8fafc;
+    color: #475569;
+}
+
+.template-info {
+    background: #fffbeb;
+    border: 1px solid #fed7aa;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 20px;
+}
+
+.template-name {
+    font-weight: 600;
+    color: #92400e;
+    margin-bottom: 5px;
+}
+
+.template-description {
+    font-size: 14px;
+    color: #a16207;
+}
+
+@media (max-width: 768px) {
+    .review-container {
+        padding: 15px;
+    }
+    
+    .employee-summary {
+        flex-direction: column;
+        text-align: center;
+        gap: 15px;
+    }
+    
+    .header-actions {
+        margin-left: 0;
+        justify-content: center;
+    }
+    
+    .content-grid {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+    
+    .review-meta {
+        flex-direction: column;
+        gap: 8px;
+    }
+}
+</style>
+@endpush
+
+@section('content')
+<div class="review-container">
+    <!-- Review Header -->
+    <div class="review-header">
+        <div class="employee-summary">
+            <div class="employee-avatar-large">
+                @if($performance->employee->avatar)
+                    <img src="{{ asset('storage/' . $performance->employee->avatar) }}" alt="{{ $performance->employee->full_name }}">
+                @else
+                    {{ substr($performance->employee->first_name, 0, 1) }}{{ substr($performance->employee->last_name, 0, 1) }}
+                @endif
+            </div>
+            <div class="employee-details">
+                <div class="status-indicator status-{{ $performance->status }}">
+                    {{ ucfirst($performance->status) }}
+                </div>
+                <h1>{{ $performance->employee->full_name }}</h1>
+                <div class="employee-subtitle">{{ $performance->employee->position }}</div>
+                <div class="review-meta">
+                    <div>{{ $performance->employee->department->name ?? 'No Department' }}</div>
+                    <div>{{ $performance->review_period }}</div>
+                    <div>{{ $performance->review_date->format('M j, Y') }}</div>
+                </div>
+            </div>
+            <div class="header-actions">
+                @if($performance->status === 'draft')
+                    <a href="{{ route('performance.edit', $performance) }}" class="btn btn-primary">
+                        Edit Review
+                    </a>
+                @endif
+                <a href="{{ route('performance.index') }}" class="btn btn-primary">
+                    All Reviews
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="content-grid">
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Template Information -->
+            @if($performance->template)
+            <div class="template-info">
+                <div class="template-name">{{ $performance->template->name }}</div>
+                @if($performance->template->description)
+                    <div class="template-description">{{ $performance->template->description }}</div>
+                @endif
+            </div>
+            @endif
+
+            <!-- Performance Scores -->
+            @if($performance->scores && $performance->template)
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">
+                        Performance Evaluation
+                    </h2>
+                </div>
+                
+                <div class="scores-grid">
+                    @foreach($performance->template->fields as $field)
+                        @if($field['type'] === 'rating' && isset($performance->scores[$field['id']]))
+                            <div class="score-item">
+                                <div class="score-header">
+                                    <div class="score-label">{{ $field['label'] }}</div>
+                                    <div class="score-weight">Weight: {{ $field['weight'] ?? 1 }}</div>
+                                </div>
+                                <div class="score-value">{{ number_format($performance->scores[$field['id']], 1) }}/5</div>
+                                <div class="score-stars">
+                                    @for($i = 1; $i <= 5; $i++)
+                                        <span class="star {{ $i <= $performance->scores[$field['id']] ? '' : 'empty' }}">★</span>
+                                    @endfor
+                                </div>
+                            </div>
+                        @endif
+                    @endforeach
+                </div>
+            </div>
+            @endif
+
+            <!-- Text Responses -->
+            @if($performance->responses && $performance->template)
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">
+                        Additional Responses
+                    </h2>
+                </div>
+                
+                @foreach($performance->template->fields as $field)
+                    @if($field['type'] === 'text' && isset($performance->responses[$field['id']]))
+                        <div class="feedback-section">
+                            <div class="feedback-label">{{ $field['label'] }}</div>
+                            <div class="feedback-content">{{ $performance->responses[$field['id']] }}</div>
+                        </div>
+                    @endif
+                @endforeach
+            </div>
+            @endif
+
+            <!-- Detailed Feedback -->
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">
+                        Detailed Feedback
+                    </h2>
+                </div>
+                
+                @if($performance->strengths)
+                    <div class="feedback-section">
+                        <div class="feedback-label">Key Strengths</div>
+                        <div class="feedback-content">{{ $performance->strengths }}</div>
+                    </div>
+                @endif
+                
+                @if($performance->areas_for_improvement)
+                    <div class="feedback-section">
+                        <div class="feedback-label">Areas for Improvement</div>
+                        <div class="feedback-content">{{ $performance->areas_for_improvement }}</div>
+                    </div>
+                @endif
+                
+                @if($performance->goals)
+                    <div class="feedback-section">
+                        <div class="feedback-label">Goals for Next Period</div>
+                        <div class="feedback-content">{{ $performance->goals }}</div>
+                    </div>
+                @endif
+                
+                @if($performance->development_plan)
+                    <div class="feedback-section">
+                        <div class="feedback-label">Development Plan</div>
+                        <div class="feedback-content">{{ $performance->development_plan }}</div>
+                    </div>
+                @endif
+                
+                @if($performance->comments)
+                    <div class="feedback-section">
+                        <div class="feedback-label">Additional Comments</div>
+                        <div class="feedback-content">{{ $performance->comments }}</div>
+                    </div>
+                @endif
+                
+                @if(!$performance->strengths && !$performance->areas_for_improvement && !$performance->goals && !$performance->development_plan && !$performance->comments)
+                    <div class="feedback-empty">No additional feedback provided.</div>
+                @endif
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <!-- Overall Score -->
+            @if($performance->overall_score)
+            <div class="overall-score-card">
+                <h3 style="margin-bottom: 15px; color: #1e293b;">Overall Score</h3>
+                <div class="score-circle">
+                    {{ number_format($performance->overall_score, 1) }}
+                </div>
+                <div class="score-description">
+                    @if($performance->overall_score >= 90)
+                        Excellent Performance
+                    @elseif($performance->overall_score >= 80)
+                        Good Performance
+                    @elseif($performance->overall_score >= 70)
+                        Satisfactory Performance
+                    @else
+                        Needs Improvement
+                    @endif
+                </div>
+                <div class="score-breakdown">
+                    Based on weighted evaluation criteria
+                </div>
+            </div>
+            @endif
+
+            <!-- Reviewer Information -->
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Reviewer</h3>
+                </div>
+                
+                <div class="reviewer-info">
+                    <div class="reviewer-header">
+                        <div class="reviewer-avatar">
+                            @if($performance->reviewer && $performance->reviewer->avatar)
+                                <img src="{{ asset('storage/' . $performance->reviewer->avatar) }}" 
+                                     alt="{{ $performance->reviewer->full_name }}">
+                            @else
+                                {{ $performance->reviewer ? substr($performance->reviewer->first_name, 0, 1) . substr($performance->reviewer->last_name, 0, 1) : '??' }}
+                            @endif
+                        </div>
+                        <div class="reviewer-details">
+                            <h3>{{ $performance->reviewer->full_name ?? 'Unknown Reviewer' }}</h3>
+                            <p>{{ $performance->reviewer->position ?? '' }}</p>
+                            <p>{{ $performance->reviewer->department->name ?? '' }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Review Timeline -->
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Review Timeline</h3>
+                </div>
+                
+                <div class="review-timeline">
+                    <div class="timeline-item">
+                        <div class="timeline-date">{{ $performance->created_at->format('M j, Y g:i A') }}</div>
+                        <div class="timeline-event">Review created</div>
+                    </div>
+                    
+                    @if($performance->submitted_at)
+                        <div class="timeline-item">
+                            <div class="timeline-date">{{ $performance->submitted_at->format('M j, Y g:i A') }}</div>
+                            <div class="timeline-event">Review submitted</div>
+                        </div>
+                    @endif
+                    
+                    @if($performance->approved_at)
+                        <div class="timeline-item">
+                            <div class="timeline-date">{{ $performance->approved_at->format('M j, Y g:i A') }}</div>
+                            <div class="timeline-event">
+                                Review approved
+                                @if($performance->approver)
+                                    by {{ $performance->approver->full_name }}
+                                @endif
+                            </div>
+                        </div>
+                    @endif
+                    
+                    <div class="timeline-item">
+                        <div class="timeline-date">{{ $performance->updated_at->format('M j, Y g:i A') }}</div>
+                        <div class="timeline-event">Last updated</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Actions</h3>
+                </div>
+                
+                <div style="display: flex; flex-direction: column; gap: 10px;">
+                    @if($performance->status === 'draft')
+                        <a href="{{ route('performance.edit', $performance) }}" 
+                           class="btn btn-outline" style="justify-content: center;">
+                            Edit Review
+                        </a>
+                        <button type="button" class="btn btn-success" 
+                                onclick="submitReview()" style="justify-content: center;">
+                            Submit for Approval
+                        </button>
+                    @endif
+                    
+                    @if($performance->status === 'completed')
+                        <button type="button" class="btn btn-success" 
+                                onclick="approveReview()" style="justify-content: center;">
+                            Approve Review
+                        </button>
+                        <button type="button" class="btn btn-outline" 
+                                onclick="rejectReview()" style="justify-content: center;">
+                            Reject Review
+                        </button>
+                    @endif
+                    
+                    <a href="{{ route('performance.clone', $performance) }}" 
+                       class="btn btn-outline" style="justify-content: center;">
+                        Clone Review
+                    </a>
+                    
+                    <a href="{{ route('employees.show', $performance->employee) }}" 
+                       class="btn btn-outline" style="justify-content: center;">
+                        View Employee Profile
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@push('scripts')
+<script>
+function submitReview() {
+    if (confirm('Are you sure you want to submit this review? You won\'t be able to edit it afterwards.')) {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '{{ route("performance.submit", $performance) }}';
+        
+        const csrfInput = document.createElement('input');
+        csrfInput.type = 'hidden';
+        csrfInput.name = '_token';
+        csrfInput.value = '{{ csrf_token() }}';
+        
+        form.appendChild(csrfInput);
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+
+function approveReview() {
+    if (confirm('Are you sure you want to approve this review?')) {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '{{ route("performance.approve", $performance) }}';
+        
+        const csrfInput = document.createElement('input');
+        csrfInput.type = 'hidden';
+        csrfInput.name = '_token';
+        csrfInput.value = '{{ csrf_token() }}';
+        
+        form.appendChild(csrfInput);
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+
+function rejectReview() {
+    const reason = prompt('Please provide a reason for rejection:');
+    if (reason && reason.trim()) {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '{{ route("performance.reject", $performance) }}';
+        
+        const csrfInput = document.createElement('input');
+        csrfInput.type = 'hidden';
+        csrfInput.name = '_token';
+        csrfInput.value = '{{ csrf_token() }}';
+        
+        const reasonInput = document.createElement('input');
+        reasonInput.type = 'hidden';
+        reasonInput.name = 'rejection_reason';
+        reasonInput.value = reason.trim();
+        
+        form.appendChild(csrfInput);
+        form.appendChild(reasonInput);
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+</script>
+@endpush
+@endsection

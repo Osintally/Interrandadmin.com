@@ -1,0 +1,285 @@
+@extends('layouts.app')
+
+@section('title', 'Performance Management Dashboard')
+
+@push('styles')
+<link rel="stylesheet" href="{{ asset('css/dashboard.css') }}">
+@endpush
+
+@section('content')
+<div class="performance-container">
+    <!-- Header -->
+    <div class="performance-header">
+        <div class="header-content">
+            <div>
+                <div class="header-title">Performance Management Dashboard</div>
+                <div class="header-subtitle" id="welcomeMessage">Welcome! Here's your performance overview.</div>
+            </div>
+            <div class="header-actions">
+                <button class="btn" onclick="refreshData()">
+                    🔄 Refresh Data
+                </button>
+                <a href="{{ route('reports.export') }}" class="btn btn-primary">
+                    📊 Export Report
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <div class="nav-tabs">
+        <div class="nav-tab active" onclick="showSection('dashboard')">📊 Dashboard</div>
+        <div class="nav-tab" onclick="showSection('reports')" id="reportsTab">📋 Reports</div>
+        <div class="nav-tab" onclick="showSection('performance')" id="performanceTab">📈 Performance</div>
+        <div class="nav-tab" onclick="showSection('leaderboard')" id="leaderboardTab">🏆 Leaderboard</div>
+        <div class="nav-tab" onclick="showSection('analytics')" id="analyticsTab">📊 Analytics</div>
+    </div>
+
+    <!-- Dashboard Section -->
+    <div id="dashboardSection">
+        <!-- Statistics Cards -->
+        <div class="dashboard-grid">
+            <div class="stat-card">
+                <div class="stat-change {{ $stats['employee_growth'] > 0 ? 'positive' : 'negative' }}">
+                    {{ $stats['employee_growth'] > 0 ? '+' : '' }}{{ $stats['employee_growth'] }}%
+                </div>
+                <div class="stat-number" id="totalEmployees">{{ $stats['total_employees'] }}</div>
+                <div class="stat-label">Total Employees</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-change {{ $stats['performance_change'] > 0 ? 'positive' : 'negative' }}">
+                    {{ $stats['performance_change'] > 0 ? '+' : '' }}{{ $stats['performance_change'] }}%
+                </div>
+                <div class="stat-number" id="avgPerformance">{{ $stats['avg_performance'] }}</div>
+                <div class="stat-label">Average Performance</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-change {{ $stats['reports_change'] > 0 ? 'positive' : 'negative' }}">
+                    {{ $stats['reports_change'] > 0 ? '+' : '' }}{{ $stats['reports_change'] }}%
+                </div>
+                <div class="stat-number" id="reportsCompleted">{{ $stats['reports_completed'] }}</div>
+                <div class="stat-label">Reports This Month</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-change positive">Active</div>
+                <div class="stat-number" id="topPerformer">{{ $stats['top_performer'] }}</div>
+                <div class="stat-label">Top Performer</div>
+            </div>
+        </div>
+
+        <!-- Main Performance Grid -->
+        <div class="performance-grid">
+            <div class="card">
+                <div class="card-header">
+                    <div>
+                        <h3 class="card-title">Performance Trends</h3>
+                        <p class="card-subtitle">Monthly performance tracking across all departments</p>
+                    </div>
+                    <select id="trendPeriod" onchange="updateTrendChart()">
+                        <option value="6">Last 6 Months</option>
+                        <option value="12" selected>Last 12 Months</option>
+                        <option value="24">Last 24 Months</option>
+                    </select>
+                </div>
+                <div class="chart-container">
+                    <canvas id="performanceChart"></canvas>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header">
+                    <div>
+                        <h3 class="card-title">Top Performers</h3>
+                        <p class="card-subtitle">Highest scoring employees this quarter</p>
+                    </div>
+                </div>
+                <div id="topPerformersList">
+                    @foreach($topPerformers as $index => $performer)
+                    <div class="leaderboard-item">
+                        <div class="rank {{ $index === 0 ? 'first' : ($index === 1 ? 'second' : ($index === 2 ? 'third' : 'other')) }}">
+                            {{ $index + 1 }}
+                        </div>
+                        <div class="employee-info">
+                            <h4>{{ $performer['name'] }}</h4>
+                            <p>{{ $performer['department'] }}</p>
+                        </div>
+                        @if($index < 3)
+                            <div class="score-badge">{{ $performer['score'] }}</div>
+                        @else
+                            <div class="score">{{ $performer['score'] }}</div>
+                        @endif
+                    </div>
+                    @endforeach
+                </div>
+            </div>
+        </div>
+
+        <!-- Recommendations Section -->
+        <div class="card mt-20">
+            <div class="card-header">
+                <div>
+                    <h3 class="card-title">Smart Recommendations</h3>
+                    <p class="card-subtitle">AI-powered insights and suggested actions</p>
+                </div>
+                <button class="btn" onclick="generateRecommendations()">🤖 Generate New</button>
+            </div>
+            <div class="recommendations">
+                @foreach($recommendations as $recommendation)
+                <div class="recommendation-card {{ $recommendation['type'] }}">
+                    <h4>{{ $recommendation['title'] }}</h4>
+                    <p>{{ $recommendation['description'] }}</p>
+                </div>
+                @endforeach
+            </div>
+        </div>
+    </div>
+
+    <!-- Reports Section -->
+    <div id="reportsSection" class="hidden">
+        <div class="card mb-20">
+            <div class="card-header">
+                <div>
+                    <h3 class="card-title">Performance Report Templates</h3>
+                    <p class="card-subtitle">Create and manage evaluation templates</p>
+                </div>
+                <a href="{{ route('templates.create') }}" class="btn btn-primary">+ New Template</a>
+            </div>
+            <div id="templatesList">
+                <div class="loading" id="templatesLoading">Loading templates...</div>
+            </div>
+        </div>
+
+        <!-- Template Builder -->
+        <div id="templateBuilder" class="report-builder">
+            <!-- This will be populated dynamically -->
+        </div>
+    </div>
+
+    <!-- Performance Section -->
+    <div id="performanceSection" class="hidden">
+        <div class="card mb-20">
+            <div class="card-header">
+                <div>
+                    <h3 class="card-title">Department Performance Analytics</h3>
+                    <p class="card-subtitle">Detailed performance metrics by department</p>
+                </div>
+                <select id="departmentFilter" onchange="updateDepartmentAnalytics()">
+                    <option value="">All Departments</option>
+                    @foreach($departments as $department)
+                    <option value="{{ $department->id }}">{{ $department->name }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="chart-container">
+                <canvas id="departmentChart"></canvas>
+            </div>
+        </div>
+
+        <div class="dashboard-grid">
+            <div class="card">
+                <div class="card-header">
+                    <h4>Individual Performance</h4>
+                </div>
+                <div id="individualPerformance">
+                    <div class="loading">Loading individual performance data...</div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header">
+                    <h4>Performance Trends</h4>
+                </div>
+                <div class="chart-container small">
+                    <canvas id="trendChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Leaderboard Section -->
+    <div id="leaderboardSection" class="hidden">
+        <div class="performance-grid">
+            <div class="card">
+                <div class="card-header">
+                    <div>
+                        <h3 class="card-title">Company-wide Leaderboard</h3>
+                        <p class="card-subtitle">Top performers across all departments</p>
+                    </div>
+                    <select onchange="updateLeaderboardPeriod(this.value)">
+                        <option value="quarter">This Quarter</option>
+                        <option value="month">This Month</option>
+                        <option value="year">This Year</option>
+                    </select>
+                </div>
+                <div id="companyLeaderboard">
+                    <div class="loading">Loading leaderboard...</div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Department Champions</h3>
+                    <p class="card-subtitle">Top performer from each department</p>
+                </div>
+                <div class="recommendations" id="departmentChampions">
+                    <div class="loading">Loading department champions...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Analytics Section -->
+    <div id="analyticsSection" class="hidden">
+        <div class="dashboard-grid mb-20" id="analyticsStats">
+            <!-- Will be populated by JavaScript -->
+        </div>
+
+        <div class="performance-grid">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Performance Distribution</h3>
+                </div>
+                <div class="chart-container">
+                    <canvas id="distributionChart"></canvas>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Improvement Areas</h3>
+                </div>
+                <div class="recommendations" id="improvementAreas">
+                    <div class="loading">Analyzing improvement areas...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Success/Error Modal -->
+<div id="notificationContainer"></div>
+
+@endsection
+
+@push('scripts')
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+<script>
+// Pass Laravel data to JavaScript
+window.performanceData = {
+    stats: @json($stats),
+    topPerformers: @json($topPerformers),
+    trends: @json($performanceTrends),
+    routes: {
+        refreshData: '{{ route("dashboard.refresh") }}',
+        exportReport: '{{ route("reports.export") }}',
+        performanceTrends: '{{ route("api.performance.trends") }}',
+        leaderboardData: '{{ route("api.leaderboard.data") }}',
+        analyticsDistribution: '{{ route("api.analytics.distribution") }}',
+        departmentStats: '{{ route("api.dashboard.stats") }}'
+    },
+    csrfToken: '{{ csrf_token() }}'
+};
+</script>
+<script src="{{ asset('js/dashboard.js') }}"></script>
+<script src="{{ asset('js/charts.js') }}"></script>
+@endpush

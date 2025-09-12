@@ -73,10 +73,19 @@ Route::middleware('web', 'authh', 'auth', 'SetSessionData', 'language', 'timezon
         Route::get('/get-attendance-by-date', [Modules\Essentials\Http\Controllers\AttendanceController::class, 'getAttendanceByDate']);
         Route::get('/get-attendance-row/{user_id}', [Modules\Essentials\Http\Controllers\AttendanceController::class, 'getAttendanceRow']);
 
-        Route::get(
-            '/user-attendance-summary',
+        Route::get('/user-attendance-summary',
             [Modules\Essentials\Http\Controllers\AttendanceController::class, 'getUserAttendanceSummary']
         );
+
+        // Enhanced Attendance Routes
+        Route::get('/enhanced-attendance/dashboard', [Modules\Essentials\Http\Controllers\EnhancedAttendanceController::class, 'dashboard'])->name('enhanced.attendance.dashboard');
+        Route::get('/enhanced-attendance/all-users-summary', [Modules\Essentials\Http\Controllers\EnhancedAttendanceController::class, 'getAllUsersSummary'])->name('enhanced.attendance.all_users_summary');
+        Route::get('/enhanced-attendance/user-summary/{userId}', [Modules\Essentials\Http\Controllers\EnhancedAttendanceController::class, 'userAttendanceSummary'])->name('enhanced.attendance.user_summary');
+        Route::get('/enhanced-attendance/employee-management', [Modules\Essentials\Http\Controllers\EnhancedAttendanceController::class, 'employeeManagement'])->name('enhanced.attendance.employee_management');
+        Route::post('/enhanced-attendance/store-employee-settings', [Modules\Essentials\Http\Controllers\EnhancedAttendanceController::class, 'storeEmployeeSettings']);
+        Route::get('/enhanced-attendance/get-employee-settings/{id}', [Modules\Essentials\Http\Controllers\EnhancedAttendanceController::class, 'getEmployeeSettings']);
+        Route::delete('/enhanced-attendance/delete-employee-settings/{id}', [Modules\Essentials\Http\Controllers\EnhancedAttendanceController::class, 'deleteEmployeeSettings']);
+        Route::get('/enhanced-attendance/get-users-for-dropdown', [Modules\Essentials\Http\Controllers\EnhancedAttendanceController::class, 'getUsersForDropdown']);
 
         Route::get('/location-employees', [Modules\Essentials\Http\Controllers\PayrollController::class, 'getEmployeesBasedOnLocation']);
         Route::get('/my-payrolls', [Modules\Essentials\Http\Controllers\PayrollController::class, 'getMyPayrolls']);

@@ -22,7 +22,20 @@
                         <li @if(request()->segment(2) == 'leave') class="active" @endif><a href="{{action([\Modules\Essentials\Http\Controllers\EssentialsLeaveController::class, 'index'])}}">@lang('essentials::lang.leave')</a></li>
                     @endif
                     @if(auth()->user()->can('essentials.crud_all_attendance') || auth()->user()->can('essentials.view_own_attendance'))
-                    <li @if(request()->segment(2) == 'attendance') class="active" @endif><a href="{{action([\Modules\Essentials\Http\Controllers\AttendanceController::class, 'index'])}}">@lang('essentials::lang.attendance')</a></li>
+                    <li class="dropdown @if(request()->segment(2) == 'enhanced-attendance' || request()->segment(2) == 'attendance') active @endif">
+                        <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
+                            Enhanced Attendance <span class="caret"></span>
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a href="/hrm/enhanced-attendance/dashboard"><i class="fas fa-chart-line"></i> Enhanced Dashboard</a></li>
+                            <li><a href="/hrm/enhanced-attendance/all-users-summary"><i class="fas fa-calendar-alt"></i> 21-Day Summary</a></li>
+                            @can('essentials.crud_all_attendance')
+                            <li><a href="/hrm/enhanced-attendance/employee-management"><i class="fas fa-users-cog"></i> Employee Management</a></li>
+                            @endcan
+                            <li class="divider"></li>
+                            <li><a href="{{action([\Modules\Essentials\Http\Controllers\AttendanceController::class, 'index'])}}"><i class="fas fa-clock"></i> Classic Attendance</a></li>
+                        </ul>
+                    </li>
                     @endif
                     <li @if(request()->segment(2) == 'payroll') class="active" @endif><a href="{{action([\Modules\Essentials\Http\Controllers\PayrollController::class, 'index'])}}">@lang('essentials::lang.payroll')</a></li>
 
