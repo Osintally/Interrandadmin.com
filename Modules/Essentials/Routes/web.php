@@ -1,9 +1,9 @@
 <?php
 
-use App\Http\Controllers\Modules;
+use Modules\Essentials\Http\Controllers;
 use Illuminate\Support\Facades\Route;
 
-Route::middleware('web', 'auth', 'SetSessionData', 'language', 'timezone', 'AdminSidebarMenu')->group(function () {
+Route::middleware(['web', 'auth', 'SetSessionData', 'language', 'timezone', 'AdminSidebarMenu'])->group(function () {
     Route::prefix('essentials')->group(function () {
         Route::get('/dashboard', [Modules\Essentials\Http\Controllers\DashboardController::class, 'essentialsDashboard']);
         Route::get('/install', [Modules\Essentials\Http\Controllers\InstallController::class, 'index']);
@@ -19,7 +19,7 @@ Route::middleware('web', 'auth', 'SetSessionData', 'language', 'timezone', 'Admi
         Route::get('memos/{memo}/attachments/{attachment_id}', [Modules\Essentials\Http\Controllers\MemoController::class, 'downloadAttachment'])->name('memos.download_attachment');
         Route::post('memos/{memo}/mark-read', [Modules\Essentials\Http\Controllers\MemoController::class, 'markAsRead'])->name('memos.mark_read');
         Route::get('users/search', [Modules\Essentials\Http\Controllers\MemoController::class, 'searchUsers'])->name('users.search');
-        
+
         // Document routes
         Route::resource('document', Modules\Essentials\Http\Controllers\DocumentController::class)->only(['index', 'store', 'destroy', 'show']);
         Route::get('document/{document}/download', [Modules\Essentials\Http\Controllers\DocumentController::class, 'download'])->name('document.download');
