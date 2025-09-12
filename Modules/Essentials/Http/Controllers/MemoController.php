@@ -52,14 +52,27 @@ class MemoController extends Controller
             return DataTables::of($memos)
                 ->addColumn('action', function($memo) use ($user_id) {
                     $actions = '<div class="btn-group">';
-                    $actions .= '<button class="btn btn-xs btn-primary view-memo" data-id="'.$memo->id.'"><i class="fa fa-eye"></i></button>';
                     
+                    // View button - always available for authorized users
+                    $actions .= '<button class="btn btn-xs btn-primary view-memo" data-id="'.$memo->id.'" title="View Memo">';
+                    $actions .= '<i class="fa fa-eye"></i>';
+                    $actions .= '</button>';
+                    
+                    // Edit and Delete buttons - only for sender
                     if ($memo->sender_id == $user_id) {
+                        // Edit button - only for draft memos
                         if ($memo->status == 'draft') {
-                            $actions .= '<button class="btn btn-xs btn-info edit-memo" data-id="'.$memo->id.'"><i class="fa fa-edit"></i></button>';
+                            $actions .= '<button class="btn btn-xs btn-info edit-memo" data-id="'.$memo->id.'" title="Edit Memo">';
+                            $actions .= '<i class="fa fa-edit"></i>';
+                            $actions .= '</button>';
                         }
-                        $actions .= '<button class="btn btn-xs btn-danger delete-memo" data-id="'.$memo->id.'"><i class="fa fa-trash"></i></button>';
+                        
+                        // Delete button - always available for sender
+                        $actions .= '<button class="btn btn-xs btn-danger delete-memo" data-id="'.$memo->id.'" title="Delete Memo">';
+                        $actions .= '<i class="fa fa-trash"></i>';
+                        $actions .= '</button>';
                     }
+                    
                     $actions .= '</div>';
                     return $actions;
                 })
@@ -158,6 +171,7 @@ class MemoController extends Controller
             abort(403, 'Unauthorized access.');
         }
 
+        // Mark memo as read for the current user if they are a recipient
         $recipient = $memo->recipients()->where('user_id', $user_id)->first();
         if ($recipient && !$recipient->is_read) {
             $recipient->is_read = true;
@@ -165,10 +179,12 @@ class MemoController extends Controller
             $recipient->save();
         }
 
+        // Log the memo view activity
         activity()
             ->performedOn($memo)
             ->log('memo_viewed');
 
+        // Return appropriate view based on request type
         if (request()->ajax()) {
             return view('essentials::memos.show_modal', compact('memo'));
         }
@@ -296,12 +312,21 @@ class MemoController extends Controller
         return response()->json(['results' => $users]);
     }
 
+    /**
+     * Check if the current user has access to view the memo
+     * 
+     * @param Memo $memo The memo to check access for
+     * @param int $user_id The user ID to check access for
+     * @return bool True if user has access, false otherwise
+     */
     private function checkMemoAccess($memo, $user_id)
     {
+        // Allow access if user is the sender
         if ($memo->sender_id == $user_id) {
             return true;
         }
         
+        // Allow access if user is a recipient (to, cc, or bcc)
         if ($memo->recipients()->where('user_id', $user_id)->exists()) {
             return true;
         }

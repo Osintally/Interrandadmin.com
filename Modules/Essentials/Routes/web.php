@@ -1,9 +1,9 @@
 <?php
 
-// use App\Http\Controllers\Modules;
-// use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Modules;
+use Illuminate\Support\Facades\Route;
 
-Route::middleware('web', 'authh', 'auth', 'SetSessionData', 'language', 'timezone', 'AdminSidebarMenu')->group(function () {
+Route::middleware('web', 'auth', 'SetSessionData', 'language', 'timezone', 'AdminSidebarMenu')->group(function () {
     Route::prefix('essentials')->group(function () {
         Route::get('/dashboard', [Modules\Essentials\Http\Controllers\DashboardController::class, 'essentialsDashboard']);
         Route::get('/install', [Modules\Essentials\Http\Controllers\InstallController::class, 'index']);
@@ -13,97 +13,105 @@ Route::middleware('web', 'authh', 'auth', 'SetSessionData', 'language', 'timezon
 
         Route::get('/', [Modules\Essentials\Http\Controllers\EssentialsController::class, 'index']);
 
-        //memo controller
-        Route::resource('memos', 'Modules\Essentials\Http\Controllers\MemoController');
-        Route::post('memos/{id}/send', [Modules\Essentials\Http\Controllers\MemoController::class, 'send'])->name('memos.send');
-        Route::get('memos/{id}/attachments/{attachment_id}', [Modules\Essentials\Http\Controllers\MemoController::class, 'downloadAttachment'])->name('memos.download_attachment');
-        Route::post('memos/{id}/mark-read', [Modules\Essentials\Http\Controllers\MemoController::class, 'markAsRead'])->name('memos.mark_read');
+        // Memo routes
+        Route::resource('memos', Modules\Essentials\Http\Controllers\MemoController::class)->except(['create', 'edit']);
+        Route::post('memos/{memo}/send', [Modules\Essentials\Http\Controllers\MemoController::class, 'send'])->name('memos.send');
+        Route::get('memos/{memo}/attachments/{attachment_id}', [Modules\Essentials\Http\Controllers\MemoController::class, 'downloadAttachment'])->name('memos.download_attachment');
+        Route::post('memos/{memo}/mark-read', [Modules\Essentials\Http\Controllers\MemoController::class, 'markAsRead'])->name('memos.mark_read');
         Route::get('users/search', [Modules\Essentials\Http\Controllers\MemoController::class, 'searchUsers'])->name('users.search');
         
-        //document controller (excluding memos)
-        Route::resource('document', 'Modules\Essentials\Http\Controllers\DocumentController')->only(['index', 'store', 'destroy', 'show']);
-        Route::get('document/download/{id}', [Modules\Essentials\Http\Controllers\DocumentController::class, 'download']);
+        // Document routes
+        Route::resource('document', Modules\Essentials\Http\Controllers\DocumentController::class)->only(['index', 'store', 'destroy', 'show']);
+        Route::get('document/{document}/download', [Modules\Essentials\Http\Controllers\DocumentController::class, 'download'])->name('document.download');
 
-        //document share controller
-        Route::resource('document-share', 'Modules\Essentials\Http\Controllers\DocumentShareController')->only(['edit', 'update']);
+        // Document share routes
+        Route::resource('document-share', Modules\Essentials\Http\Controllers\DocumentShareController::class)->only(['edit', 'update']);
 
-        //todo controller
-        Route::resource('todo', 'ToDoController');
+        // Todo routes
+        Route::resource('todo', Modules\Essentials\Http\Controllers\ToDoController::class);
+        Route::post('todo/add-comment', [Modules\Essentials\Http\Controllers\ToDoController::class, 'addComment'])->name('todo.add_comment');
+        Route::delete('todo/delete-comment/{comment}', [Modules\Essentials\Http\Controllers\ToDoController::class, 'deleteComment'])->name('todo.delete_comment');
+        Route::delete('todo/delete-document/{document}', [Modules\Essentials\Http\Controllers\ToDoController::class, 'deleteDocument'])->name('todo.delete_document');
+        Route::post('todo/upload-document', [Modules\Essentials\Http\Controllers\ToDoController::class, 'uploadDocument'])->name('todo.upload_document');
+        Route::get('todo/{todo}/shared-docs', [Modules\Essentials\Http\Controllers\ToDoController::class, 'viewSharedDocs'])->name('todo.view_shared_docs');
 
-        Route::post('todo/add-comment', [Modules\Essentials\Http\Controllers\ToDoController::class, 'addComment']);
-        Route::get('todo/delete-comment/{id}', [Modules\Essentials\Http\Controllers\ToDoController::class, 'deleteComment']);
-        Route::get('todo/delete-document/{id}', [Modules\Essentials\Http\Controllers\ToDoController::class, 'deleteDocument']);
-        Route::post('todo/upload-document', [Modules\Essentials\Http\Controllers\ToDoController::class, 'uploadDocument']);
-        Route::get('view-todo-{id}-share-docs', [Modules\Essentials\Http\Controllers\ToDoController::class, 'viewSharedDocs']);
+        // Reminder routes
+        Route::resource('reminder', Modules\Essentials\Http\Controllers\ReminderController::class)->only(['index', 'store', 'edit', 'update', 'destroy', 'show']);
 
-        //reminder controller
-        Route::resource('reminder', 'Modules\Essentials\Http\Controllers\ReminderController')->only(['index', 'store', 'edit', 'update', 'destroy', 'show']);
+        // Message routes
+        Route::get('get-new-messages', [Modules\Essentials\Http\Controllers\EssentialsMessageController::class, 'getNewMessages'])->name('messages.get_new');
+        Route::resource('messages', Modules\Essentials\Http\Controllers\EssentialsMessageController::class)->only(['index', 'store', 'destroy']);
 
-        //message controller
-        Route::get('get-new-messages', [Modules\Essentials\Http\Controllers\EssentialsMessageController::class, 'getNewMessages']);
-        Route::resource('messages', 'Modules\Essentials\Http\Controllers\EssentialsMessageController')->only(['index', 'store', 'destroy']);
+        // Allowance and deduction routes
+        Route::resource('allowance-deduction', Modules\Essentials\Http\Controllers\EssentialsAllowanceAndDeductionController::class);
 
-        //Allowance and deduction controller
-        Route::resource('allowance-deduction', 'Modules\Essentials\Http\Controllers\EssentialsAllowanceAndDeductionController');
+        // Knowledge base routes
+        Route::resource('knowledge-base', Modules\Essentials\Http\Controllers\KnowledgeBaseController::class);
 
-        Route::resource('knowledge-base', 'Modules\Essentials\Http\Controllers\KnowledgeBaseController');
-
-        Route::get('user-sales-targets', [Modules\Essentials\Http\Controllers\DashboardController::class, 'getUserSalesTargets']);
+        // Sales targets
+        Route::get('user-sales-targets', [Modules\Essentials\Http\Controllers\DashboardController::class, 'getUserSalesTargets'])->name('user_sales_targets');
     });
 
     Route::prefix('hrm')->group(function () {
-        Route::get('/dashboard', [Modules\Essentials\Http\Controllers\DashboardController::class, 'hrmDashboard'])->name('hrmDashboard');
-        Route::resource('/leave-type', 'Modules\Essentials\Http\Controllers\EssentialsLeaveTypeController');
-        Route::resource('/leave', 'Modules\Essentials\Http\Controllers\EssentialsLeaveController');
-        Route::post('/change-status', [Modules\Essentials\Http\Controllers\EssentialsLeaveController::class, 'changeStatus']);
-        Route::get('/leave/activity/{id}', [Modules\Essentials\Http\Controllers\EssentialsLeaveController::class, 'activity']);
-        Route::get('/user-leave-summary', [Modules\Essentials\Http\Controllers\EssentialsLeaveController::class, 'getUserLeaveSummary']);
-        Route::get('/change-leave-status', [Modules\Essentials\Http\Controllers\EssentialsLeaveController::class, 'changeLeaveStatus']);
+        Route::get('/dashboard', [Modules\Essentials\Http\Controllers\DashboardController::class, 'hrmDashboard'])->name('hrm.dashboard');
+        
+        // Leave management
+        Route::resource('/leave-type', Modules\Essentials\Http\Controllers\EssentialsLeaveTypeController::class);
+        Route::resource('/leave', Modules\Essentials\Http\Controllers\EssentialsLeaveController::class);
+        Route::post('/change-status', [Modules\Essentials\Http\Controllers\EssentialsLeaveController::class, 'changeStatus'])->name('leave.change_status');
+        Route::get('/leave/activity/{leave}', [Modules\Essentials\Http\Controllers\EssentialsLeaveController::class, 'activity'])->name('leave.activity');
+        Route::get('/user-leave-summary', [Modules\Essentials\Http\Controllers\EssentialsLeaveController::class, 'getUserLeaveSummary'])->name('leave.user_summary');
+        Route::get('/change-leave-status', [Modules\Essentials\Http\Controllers\EssentialsLeaveController::class, 'changeLeaveStatus'])->name('leave.change_status_form');
 
-        Route::get('/settings', [Modules\Essentials\Http\Controllers\EssentialsSettingsController::class, 'edit']);
-        Route::post('/settings', [Modules\Essentials\Http\Controllers\EssentialsSettingsController::class, 'update']);
+        // Settings
+        Route::get('/settings', [Modules\Essentials\Http\Controllers\EssentialsSettingsController::class, 'edit'])->name('hrm.settings.edit');
+        Route::post('/settings', [Modules\Essentials\Http\Controllers\EssentialsSettingsController::class, 'update'])->name('hrm.settings.update');
 
-        Route::post('/import-attendance', [Modules\Essentials\Http\Controllers\AttendanceController::class, 'importAttendance']);
-        Route::resource('/attendance', 'Modules\Essentials\Http\Controllers\AttendanceController');
-        Route::post('/clock-in-clock-out', [Modules\Essentials\Http\Controllers\AttendanceController::class, 'clockInClockOut']);
-
-        Route::post('/validate-clock-in-clock-out', [Modules\Essentials\Http\Controllers\AttendanceController::class, 'validateClockInClockOut']);
-
-        Route::get('/get-attendance-by-shift', [Modules\Essentials\Http\Controllers\AttendanceController::class, 'getAttendanceByShift']);
-        Route::get('/get-attendance-by-date', [Modules\Essentials\Http\Controllers\AttendanceController::class, 'getAttendanceByDate']);
-        Route::get('/get-attendance-row/{user_id}', [Modules\Essentials\Http\Controllers\AttendanceController::class, 'getAttendanceRow']);
-
-        Route::get('/user-attendance-summary',
-            [Modules\Essentials\Http\Controllers\AttendanceController::class, 'getUserAttendanceSummary']
-        );
+        // Basic Attendance
+        Route::post('/import-attendance', [Modules\Essentials\Http\Controllers\AttendanceController::class, 'importAttendance'])->name('attendance.import');
+        Route::resource('/attendance', Modules\Essentials\Http\Controllers\AttendanceController::class);
+        Route::post('/clock-in-clock-out', [Modules\Essentials\Http\Controllers\AttendanceController::class, 'clockInClockOut'])->name('attendance.clock');
+        Route::post('/validate-clock', [Modules\Essentials\Http\Controllers\AttendanceController::class, 'validateClockInClockOut'])->name('attendance.validate_clock');
+        Route::get('/get-attendance-by-shift', [Modules\Essentials\Http\Controllers\AttendanceController::class, 'getAttendanceByShift'])->name('attendance.by_shift');
+        Route::get('/get-attendance-by-date', [Modules\Essentials\Http\Controllers\AttendanceController::class, 'getAttendanceByDate'])->name('attendance.by_date');
+        Route::get('/get-attendance-row/{user}', [Modules\Essentials\Http\Controllers\AttendanceController::class, 'getAttendanceRow'])->name('attendance.user_row');
+        Route::get('/user-attendance-summary', [Modules\Essentials\Http\Controllers\AttendanceController::class, 'getUserAttendanceSummary'])->name('attendance.user_summary');
 
         // Enhanced Attendance Routes
-        Route::get('/enhanced-attendance/dashboard', [Modules\Essentials\Http\Controllers\EnhancedAttendanceController::class, 'dashboard'])->name('enhanced.attendance.dashboard');
-        Route::get('/enhanced-attendance/all-users-summary', [Modules\Essentials\Http\Controllers\EnhancedAttendanceController::class, 'getAllUsersSummary'])->name('enhanced.attendance.all_users_summary');
-        Route::get('/enhanced-attendance/user-summary/{userId}', [Modules\Essentials\Http\Controllers\EnhancedAttendanceController::class, 'userAttendanceSummary'])->name('enhanced.attendance.user_summary');
-        Route::get('/enhanced-attendance/employee-management', [Modules\Essentials\Http\Controllers\EnhancedAttendanceController::class, 'employeeManagement'])->name('enhanced.attendance.employee_management');
-        Route::post('/enhanced-attendance/store-employee-settings', [Modules\Essentials\Http\Controllers\EnhancedAttendanceController::class, 'storeEmployeeSettings']);
-        Route::get('/enhanced-attendance/get-employee-settings/{id}', [Modules\Essentials\Http\Controllers\EnhancedAttendanceController::class, 'getEmployeeSettings']);
-        Route::delete('/enhanced-attendance/delete-employee-settings/{id}', [Modules\Essentials\Http\Controllers\EnhancedAttendanceController::class, 'deleteEmployeeSettings']);
-        Route::get('/enhanced-attendance/get-users-for-dropdown', [Modules\Essentials\Http\Controllers\EnhancedAttendanceController::class, 'getUsersForDropdown']);
+        Route::prefix('enhanced-attendance')->name('enhanced.attendance.')->group(function () {
+            Route::get('/', [Modules\Essentials\Http\Controllers\EnhancedAttendanceController::class, 'dashboard'])->name('dashboard');
+            Route::get('/all-users-summary', [Modules\Essentials\Http\Controllers\EnhancedAttendanceController::class, 'getAllUsersSummary'])->name('all_users_summary');
+            Route::get('/user-summary/{user}', [Modules\Essentials\Http\Controllers\EnhancedAttendanceController::class, 'userAttendanceSummary'])->name('user_summary');
+            Route::get('/employee-management', [Modules\Essentials\Http\Controllers\EnhancedAttendanceController::class, 'employeeManagement'])->name('employee_management');
+            Route::post('/store-employee-settings', [Modules\Essentials\Http\Controllers\EnhancedAttendanceController::class, 'storeEmployeeSettings'])->name('store_employee_settings');
+            Route::get('/get-employee-settings/{employee}', [Modules\Essentials\Http\Controllers\EnhancedAttendanceController::class, 'getEmployeeSettings'])->name('get_employee_settings');
+            Route::delete('/delete-employee-settings/{employee}', [Modules\Essentials\Http\Controllers\EnhancedAttendanceController::class, 'deleteEmployeeSettings'])->name('delete_employee_settings');
+            Route::get('/get-users-for-dropdown', [Modules\Essentials\Http\Controllers\EnhancedAttendanceController::class, 'getUsersForDropdown'])->name('users_dropdown');
+        });
 
-        Route::get('/location-employees', [Modules\Essentials\Http\Controllers\PayrollController::class, 'getEmployeesBasedOnLocation']);
-        Route::get('/my-payrolls', [Modules\Essentials\Http\Controllers\PayrollController::class, 'getMyPayrolls']);
-        Route::get('/get-allowance-deduction-row', [Modules\Essentials\Http\Controllers\PayrollController::class, 'getAllowanceAndDeductionRow']);
-        Route::get('/payroll-group-datatable', [Modules\Essentials\Http\Controllers\PayrollController::class, 'payrollGroupDatatable']);
-        Route::get('/view/{id}/payroll-group', [Modules\Essentials\Http\Controllers\PayrollController::class, 'viewPayrollGroup']);
-        Route::get('/edit/{id}/payroll-group', [Modules\Essentials\Http\Controllers\PayrollController::class, 'getEditPayrollGroup']);
-        Route::post('/update-payroll-group', [Modules\Essentials\Http\Controllers\PayrollController::class, 'getUpdatePayrollGroup']);
-        Route::get('/payroll-group/{id}/add-payment', [Modules\Essentials\Http\Controllers\PayrollController::class, 'addPayment']);
-        Route::post('/post-payment-payroll-group', [Modules\Essentials\Http\Controllers\PayrollController::class, 'postAddPayment']);
-        Route::resource('/payroll', 'Modules\Essentials\Http\Controllers\PayrollController');
-        Route::resource('/holiday', 'EssentialsHolidayController');
+        // Payroll management
+        Route::get('/employees-by-location', [Modules\Essentials\Http\Controllers\PayrollController::class, 'getEmployeesBasedOnLocation'])->name('payroll.location_employees');
+        Route::get('/my-payrolls', [Modules\Essentials\Http\Controllers\PayrollController::class, 'getMyPayrolls'])->name('payroll.my_payrolls');
+        Route::get('/get-allowance-deduction-row', [Modules\Essentials\Http\Controllers\PayrollController::class, 'getAllowanceAndDeductionRow'])->name('payroll.allowance_deduction_row');
+        Route::get('/payroll-group-datatable', [Modules\Essentials\Http\Controllers\PayrollController::class, 'payrollGroupDatatable'])->name('payroll.group_datatable');
+        Route::get('/view/{payroll}/payroll-group', [Modules\Essentials\Http\Controllers\PayrollController::class, 'viewPayrollGroup'])->name('payroll.view_group');
+        Route::get('/edit/{payroll}/payroll-group', [Modules\Essentials\Http\Controllers\PayrollController::class, 'getEditPayrollGroup'])->name('payroll.edit_group');
+        Route::post('/update-payroll-group', [Modules\Essentials\Http\Controllers\PayrollController::class, 'getUpdatePayrollGroup'])->name('payroll.update_group');
+        Route::get('/payroll-group/{payroll}/add-payment', [Modules\Essentials\Http\Controllers\PayrollController::class, 'addPayment'])->name('payroll.add_payment');
+        Route::post('/post-payment-payroll-group', [Modules\Essentials\Http\Controllers\PayrollController::class, 'postAddPayment'])->name('payroll.post_payment');
+        Route::resource('/payroll', Modules\Essentials\Http\Controllers\PayrollController::class);
+        
+        // Holiday management
+        Route::resource('/holiday', Modules\Essentials\Http\Controllers\EssentialsHolidayController::class);
 
-        Route::get('/shift/assign-users/{shift_id}', [Modules\Essentials\Http\Controllers\ShiftController::class, 'getAssignUsers']);
-        Route::post('/shift/assign-users', [Modules\Essentials\Http\Controllers\ShiftController::class, 'postAssignUsers']);
-        Route::resource('/shift', 'Modules\Essentials\Http\Controllers\ShiftController');
-        Route::get('/sales-target', [Modules\Essentials\Http\Controllers\SalesTargetController::class, 'index']);
-        Route::get('/set-sales-target/{id}', [Modules\Essentials\Http\Controllers\SalesTargetController::class, 'setSalesTarget']);
-        Route::post('/save-sales-target', [Modules\Essentials\Http\Controllers\SalesTargetController::class, 'saveSalesTarget']);
+        // Shift management
+        Route::get('/shift/assign-users/{shift}', [Modules\Essentials\Http\Controllers\ShiftController::class, 'getAssignUsers'])->name('shift.assign_users');
+        Route::post('/shift/assign-users', [Modules\Essentials\Http\Controllers\ShiftController::class, 'postAssignUsers'])->name('shift.post_assign_users');
+        Route::resource('/shift', Modules\Essentials\Http\Controllers\ShiftController::class);
+        
+        // Sales targets
+        Route::get('/sales-target', [Modules\Essentials\Http\Controllers\SalesTargetController::class, 'index'])->name('sales_target.index');
+        Route::get('/set-sales-target/{user}', [Modules\Essentials\Http\Controllers\SalesTargetController::class, 'setSalesTarget'])->name('sales_target.set');
+        Route::post('/save-sales-target', [Modules\Essentials\Http\Controllers\SalesTargetController::class, 'saveSalesTarget'])->name('sales_target.save');
     });
 });

@@ -127,11 +127,35 @@ $(document).ready(function() {
         order: [[3, 'desc']]
     });
 
-    tinymce.init({
-        selector: '#memo_body',
-        height: 300,
-        plugins: 'advlist autolink lists link image charmap print preview anchor searchreplace visualblocks code fullscreen insertdatetime media table paste code help wordcount',
-        toolbar: 'undo redo | formatselect | bold italic backcolor | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | removeformat | help'
+    // Initialize TinyMCE when modal is shown
+    function initTinyMCE() {
+        // Destroy existing instance if it exists
+        if (tinymce.get('memo_body')) {
+            tinymce.get('memo_body').destroy();
+        }
+        
+        tinymce.init({
+            selector: '#memo_body',
+            height: 300,
+            plugins: 'advlist autolink lists link image charmap print preview anchor searchreplace visualblocks code fullscreen insertdatetime media table paste code help wordcount',
+            toolbar: 'undo redo | formatselect | bold italic backcolor | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | removeformat | help',
+            setup: function (editor) {
+                editor.on('change', function () {
+                    editor.save();
+                });
+                editor.on('init', function () {
+                    // Remove required attribute from original textarea to prevent validation issues
+                    $('#memo_body').removeAttr('required');
+                });
+            }
+        });
+    }
+    
+    // Destroy TinyMCE when modal is hidden
+    $('#compose_memo_modal').on('hidden.bs.modal', function () {
+        if (tinymce.get('memo_body')) {
+            tinymce.get('memo_body').destroy();
+        }
     });
 
     $('#to_recipients, #cc_recipients, #bcc_recipients').select2({
@@ -162,15 +186,28 @@ $(document).ready(function() {
         $('#form_method').val('POST');
         $('#memo_id').val('');
         $('#compose_memo_modal').modal('show');
+        
+        // Initialize TinyMCE after modal is shown
+        setTimeout(function() {
+            initTinyMCE();
+        }, 300);
     });
     
     function resetMemoForm() {
         $('#compose_memo_form')[0].reset();
         $('#to_recipients, #cc_recipients, #bcc_recipients').val(null).trigger('change');
+        
+        // Clear TinyMCE content if it exists
         if (tinymce.get('memo_body')) {
             tinymce.get('memo_body').setContent('');
         }
+        
+        // Clear attachment preview
         $('#attachment_preview').empty();
+        
+        // Reset form method and memo ID
+        $('#form_method').val('POST');
+        $('#memo_id').val('');
     }
 
     $('#memo_attachments').change(function() {
@@ -188,20 +225,36 @@ $(document).ready(function() {
 
     $('#compose_memo_form').submit(function(e) {
         e.preventDefault();
-        tinymce.triggerSave();
+        
+        // Save TinyMCE content before validation
+        if (tinymce.get('memo_body')) {
+            tinymce.triggerSave();
+        }
         
         // Validate required fields
-        var requiredFields = ['subject', 'body'];
         var isValid = true;
         
-        requiredFields.forEach(function(field) {
-            var value = $('[name="' + field + '"]').val();
-            if (!value || value.trim() === '') {
-                toastr.error(field.charAt(0).toUpperCase() + field.slice(1) + ' is required.');
-                isValid = false;
-            }
-        });
+        // Validate subject
+        var subject = $('[name="subject"]').val();
+        if (!subject || subject.trim() === '') {
+            toastr.error('Subject is required.');
+            isValid = false;
+        }
         
+        // Validate body content from TinyMCE
+        var bodyContent = '';
+        if (tinymce.get('memo_body')) {
+            bodyContent = tinymce.get('memo_body').getContent();
+        } else {
+            bodyContent = $('[name="body"]').val();
+        }
+        
+        if (!bodyContent || bodyContent.trim() === '' || bodyContent.trim() === '<p></p>' || bodyContent.trim() === '<p>&nbsp;</p>') {
+            toastr.error('Message is required.');
+            isValid = false;
+        }
+        
+        // Validate recipients
         if ($('#to_recipients').val() === null || $('#to_recipients').val().length === 0) {
             toastr.error('At least one recipient is required.');
             isValid = false;
@@ -250,12 +303,17 @@ $(document).ready(function() {
                 }
             },
             error: function(xhr) {
+                console.error('Send memo error:', xhr);
                 var errorMessage = 'An error occurred while sending the memo.';
                 if (xhr.responseJSON && xhr.responseJSON.message) {
                     errorMessage = xhr.responseJSON.message;
                 } else if (xhr.responseJSON && xhr.responseJSON.errors) {
                     var errors = xhr.responseJSON.errors;
                     errorMessage = Object.values(errors).flat().join(', ');
+                } else if (xhr.status === 422) {
+                    errorMessage = 'Validation error. Please check your input.';
+                } else if (xhr.status === 500) {
+                    errorMessage = 'Server error. Please try again later.';
                 }
                 toastr.error(errorMessage);
             },
@@ -267,7 +325,10 @@ $(document).ready(function() {
     });
 
     $('#save_draft_btn').click(function() {
-        tinymce.triggerSave();
+        // Save TinyMCE content before processing
+        if (tinymce.get('memo_body')) {
+            tinymce.triggerSave();
+        }
         
         var formData = new FormData($('#compose_memo_form')[0]);
         
@@ -307,12 +368,17 @@ $(document).ready(function() {
                 }
             },
             error: function(xhr) {
+                console.error('Save draft error:', xhr);
                 var errorMessage = 'An error occurred while saving the draft.';
                 if (xhr.responseJSON && xhr.responseJSON.message) {
                     errorMessage = xhr.responseJSON.message;
                 } else if (xhr.responseJSON && xhr.responseJSON.errors) {
                     var errors = xhr.responseJSON.errors;
                     errorMessage = Object.values(errors).flat().join(', ');
+                } else if (xhr.status === 422) {
+                    errorMessage = 'Validation error. Please check your input.';
+                } else if (xhr.status === 500) {
+                    errorMessage = 'Server error. Please try again later.';
                 }
                 toastr.error(errorMessage);
             },
@@ -323,18 +389,41 @@ $(document).ready(function() {
         });
     });
 
+    // Handle view memo button click
     $(document).on('click', '.view-memo', function() {
         var memo_id = $(this).data('id');
+        var $button = $(this);
+        
+        // Disable button to prevent multiple clicks
+        $button.prop('disabled', true);
         
         $.ajax({
             url: "{{ action([\Modules\Essentials\Http\Controllers\MemoController::class, 'show'], '') }}/" + memo_id,
             type: 'GET',
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            },
             success: function(response) {
                 $('#view_memo_content').html(response);
                 $('#view_memo_modal').modal('show');
             },
             error: function(xhr) {
-                toastr.error('Error loading memo details.');
+                console.error('View memo error:', xhr);
+                var errorMessage = 'Error loading memo details.';
+                
+                if (xhr.status === 403) {
+                    errorMessage = 'You do not have permission to view this memo.';
+                } else if (xhr.status === 404) {
+                    errorMessage = 'Memo not found.';
+                } else if (xhr.responseJSON && xhr.responseJSON.message) {
+                    errorMessage = xhr.responseJSON.message;
+                }
+                
+                toastr.error(errorMessage);
+            },
+            complete: function() {
+                // Re-enable button
+                $button.prop('disabled', false);
             }
         });
     });
@@ -360,19 +449,29 @@ $(document).ready(function() {
                     
                     // Populate form fields
                     $('[name="subject"]').val(memo.subject);
-                    if (tinymce.get('memo_body')) {
-                        tinymce.get('memo_body').setContent(memo.body);
-                    }
                     
-                    // Populate recipients
+                    // Populate recipients first
                     populateRecipients(memo.recipients);
                     
+                    // Show modal first
                     $('#compose_memo_modal').modal('show');
+                    
+                    // Initialize TinyMCE and set content after modal is shown
+                    setTimeout(function() {
+                        initTinyMCE();
+                        // Wait for TinyMCE to be ready before setting content
+                        setTimeout(function() {
+                            if (tinymce.get('memo_body')) {
+                                tinymce.get('memo_body').setContent(memo.body || '');
+                            }
+                        }, 500);
+                    }, 300);
                 } else {
                     toastr.error(response.msg || 'Error loading memo for editing.');
                 }
             },
             error: function(xhr) {
+                console.error('Edit memo error:', xhr);
                 toastr.error('Error loading memo for editing.');
             }
         });

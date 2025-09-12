@@ -87,7 +87,7 @@ class DocumentController extends Controller
                              @lang( "essentials::lang.download")
                         </a>
                     @elseif($type == "memos")
-                            <button data-href ="{{action(\'\Modules\Essentials\Http\Controllers\DocumentController@show\',[$id])}}" class="tw-dw-btn tw-dw-btn-xs tw-dw-btn-outline  tw-dw-btn-primary view_memos">
+                            <button data-href ="{{action(\'\Modules\Essentials\Http\Controllers\MemoController@show\',[$id])}}" class="tw-dw-btn tw-dw-btn-xs tw-dw-btn-outline  tw-dw-btn-primary view_memos">
                                 <i class="fa fa-eye"></i>
                                 @lang("essentials::lang.view")
                             </button>
@@ -144,11 +144,7 @@ class DocumentController extends Controller
                 ->make(true);
         }
 
-        if (! empty($type)) {
-            return view('essentials::memos.index');
-        } elseif (empty($type)) {
-            return view('essentials::document.index');
-        }
+        return view('essentials::document.index');
     }
 
     /**
@@ -203,7 +199,7 @@ class DocumentController extends Controller
                 ->with('status', $output);
             } else {
                 return redirect()
-                ->action([\Modules\Essentials\Http\Controllers\DocumentController::class, 'index'], ['type' => 'memos'])
+                ->action([\Modules\Essentials\Http\Controllers\MemoController::class, 'index'])
                 ->with('status', $output);
             }
         } catch (\Exception $e) {

@@ -19,7 +19,7 @@
 
                     <li @if(request()->segment(2) == 'document' && request()->get('type') != 'memos') class="active" @endif><a href="{{action([\Modules\Essentials\Http\Controllers\DocumentController::class, 'index'])}}">@lang('essentials::lang.document')</a></li>
 
-                    <li @if(request()->segment(2) == 'document' && request()->get('type') == 'memos') class="active" @endif><a href="{{action([\Modules\Essentials\Http\Controllers\DocumentController::class, 'index']) .'?type=memos'}}">@lang('essentials::lang.memos')</a></li>
+                    <li @if(request()->segment(2) == 'memos') class="active" @endif><a href="{{action([\Modules\Essentials\Http\Controllers\MemoController::class, 'index'])}}">@lang('essentials::lang.memos')</a></li>
 
                     <li @if(request()->segment(2) == 'reminder') class="active" @endif><a href="{{action([\Modules\Essentials\Http\Controllers\ReminderController::class, 'index'])}}">@lang('essentials::lang.reminders')</a></li>
                     @if (auth()->user()->can('essentials.view_message') || auth()->user()->can('essentials.create_message'))

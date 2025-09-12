@@ -6,6 +6,7 @@ RUN apt-get update && apt-get install -y \
     libpng-dev \
     libonig-dev \
     libxml2-dev \
+<<<<<<< HEAD
     libzip-dev \
     zip \
     unzip \
@@ -16,6 +17,12 @@ RUN apt-get update && apt-get install -y \
 # Install additional PHP extensions
 RUN docker-php-ext-configure gd \
     && docker-php-ext-install -j$(nproc) gd
+=======
+    zip \
+    unzip \
+    git \
+    && docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd
+>>>>>>> c9b2c661bcbb73e4f6c89002e1786c3996b58132
 
 # Enable Apache mod_rewrite
 RUN a2enmod rewrite
@@ -26,6 +33,7 @@ WORKDIR /var/www/html
 # Copy application files
 COPY . /var/www/html
 
+<<<<<<< HEAD
 # Copy custom Apache config
 RUN echo '<Directory /var/www/html/public>\n\
     Options Indexes FollowSymLinks\n\
@@ -38,10 +46,19 @@ RUN echo '<Directory /var/www/html/public>\n\
 RUN chown -R www-data:www-data /var/www/html \
     && chmod -R 755 /var/www/html \
     && chmod -R 777 /var/www/html/storage
+=======
+# Copy custom Apache config for Laravel (if needed)
+# COPY ./docker/apache/vhost.conf /etc/apache2/sites-available/000-default.conf
+
+# Set permissions
+RUN chown -R www-data:www-data /var/www/html \
+    && chmod -R 755 /var/www/html
+>>>>>>> c9b2c661bcbb73e4f6c89002e1786c3996b58132
 
 # Install Composer
 COPY --from=composer:2.6 /usr/bin/composer /usr/bin/composer
 
+<<<<<<< HEAD
 # Set Composer environment variables
 ENV COMPOSER_ALLOW_SUPERUSER=1
 ENV COMPOSER_NO_INTERACTION=1
@@ -65,6 +82,8 @@ RUN php artisan key:generate --force \
     && php artisan view:clear \
     && php artisan route:clear
 
+=======
+>>>>>>> c9b2c661bcbb73e4f6c89002e1786c3996b58132
 # Expose port 80
 EXPOSE 80
 
