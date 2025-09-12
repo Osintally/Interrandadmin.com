@@ -1,7 +1,9 @@
 <?php
 
 use Modules\Essentials\Http\Controllers;
+use Modules\Essentials\Http\Controllers\MemoController;
 use Illuminate\Support\Facades\Route;
+
 
 Route::middleware(['web', 'auth', 'SetSessionData', 'language', 'timezone', 'AdminSidebarMenu'])->group(function () {
     Route::prefix('essentials')->group(function () {
