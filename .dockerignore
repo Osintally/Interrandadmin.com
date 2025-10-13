@@ -1,0 +1,96 @@
+# Dependencies
+vendor/
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Version control
+.git/
+.gitignore
+.gitattributes
+
+# Docker files (keep main files for build context)
+# Dockerfile
+.dockerignore
+# docker-compose*.yml
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+storage/logs/
+storage/framework/cache/
+storage/framework/sessions/
+storage/framework/views/
+
+# Cache and temporary files
+bootstrap/cache/
+.php_cs.cache
+.phpunit.result.cache
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Documentation
+*.md
+*.pdf
+readme.pdf
+
+# Archives
+*.zip
+*.tar.gz
+Superadmin.zip
+
+# Test files
+tests/
+phpunit.xml
+
+# Development files
+check_*.php
+comprehensive_*.php
+functionality_test.html
+navigation_test.html
+
+# Performance reports
+Performance Report/
+
+# Backup files
+database_backup_script.*
+
+# Frontend development files
+PMS frontend/
+SHR/
+Attendance&Payroll MS/
+Attendance_converter/
+Fixing_interface/
+
+# Superadmin files
+Superadmin/
+Superadmin.zip
+
+# Production optimizations
+# Keep only necessary files for production
+*.bat
+*.sh
+!docker-entrypoint*.sh
+
+# Development documentation
+docs/
+*.md
+!README.md
+
+# Temporary files
+tmp/
+temp/

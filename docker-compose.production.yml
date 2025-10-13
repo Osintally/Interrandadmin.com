@@ -1,0 +1,119 @@
+version: '3.8'
+
+services:
+  # Laravel Application
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.production
+      target: production
+    container_name: interrand_app_production
+    restart: unless-stopped
+    working_dir: /var/www/html
+    volumes:
+      - ./storage:/var/www/html/storage
+      - ./bootstrap/cache:/var/www/html/bootstrap/cache
+      - ./public/uploads:/var/www/html/public/uploads
+    ports:
+      - "8000:80"
+    environment:
+      - APP_ENV=production
+      - APP_DEBUG=false
+      - APP_URL=${APP_URL:-http://localhost:8000}
+      - DB_HOST=mysql
+      - DB_DATABASE=${DB_DATABASE:-interrand_db}
+      - DB_USERNAME=${DB_USERNAME:-interrand_user}
+      - DB_PASSWORD=${DB_PASSWORD:-interrand_password}
+      - DB_PORT=3306
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - CACHE_DRIVER=redis
+      - SESSION_DRIVER=redis
+      - RUN_MIGRATIONS=${RUN_MIGRATIONS:-false}
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    networks:
+      - interrand_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # MySQL Database
+  mysql:
+    image: mysql:8.0
+    container_name: interrand_mysql_production
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: ${DB_DATABASE:-interrand_db}
+      MYSQL_USER: ${DB_USERNAME:-interrand_user}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-interrand_password}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root_password_secure_2024}
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./docker/mysql/my.cnf:/etc/mysql/conf.d/my.cnf:ro
+    ports:
+      - "3306:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD:-root_password_secure_2024}"]
+      timeout: 20s
+      retries: 10
+      interval: 10s
+      start_period: 30s
+    networks:
+      - interrand_network
+    command: --default-authentication-plugin=mysql_native_password
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: interrand_redis_production
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+      - ./docker/redis/redis.conf:/usr/local/etc/redis/redis.conf:ro
+    networks:
+      - interrand_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+    command: redis-server /usr/local/etc/redis/redis.conf
+
+  # Nginx Reverse Proxy (Optional)
+  nginx:
+    image: nginx:alpine
+    container_name: interrand_nginx_production
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./docker/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./docker/nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./docker/ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - app
+    networks:
+      - interrand_network
+
+volumes:
+  mysql_data:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  interrand_network:
+    driver: bridge
+
+
+

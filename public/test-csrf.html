@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>CSRF Token Test</title>
+    <meta name="csrf-token" content="test-token-12345">
+    <meta name="csrf_token" content="test-token-12345">
+    <meta name="X-CSRF-TOKEN" content="test-token-12345">
+</head>
+<body>
+    <h1>CSRF Token Test</h1>
+    <div id="results"></div>
+    
+    <script>
+        // Test CSRF token availability
+        function testCsrfToken() {
+            var results = document.getElementById('results');
+            var tests = [];
+            
+            // Test 1: Meta tag access
+            var metaToken = document.querySelector('meta[name="csrf-token"]');
+            tests.push('Meta tag (csrf-token): ' + (metaToken ? metaToken.getAttribute('content') : 'NOT FOUND'));
+            
+            // Test 2: Alternative meta tag
+            var metaToken2 = document.querySelector('meta[name="csrf_token"]');
+            tests.push('Meta tag (csrf_token): ' + (metaToken2 ? metaToken2.getAttribute('content') : 'NOT FOUND'));
+            
+            // Test 3: X-CSRF-TOKEN meta tag
+            var metaToken3 = document.querySelector('meta[name="X-CSRF-TOKEN"]');
+            tests.push('Meta tag (X-CSRF-TOKEN): ' + (metaToken3 ? metaToken3.getAttribute('content') : 'NOT FOUND'));
+            
+            // Test 4: Global variables
+            tests.push('window.csrfToken: ' + (window.csrfToken || 'NOT SET'));
+            tests.push('window.Laravel.csrfToken: ' + (window.Laravel && window.Laravel.csrfToken || 'NOT SET'));
+            
+            // Display results
+            results.innerHTML = '<ul><li>' + tests.join('</li><li>') + '</li></ul>';
+        }
+        
+        // Run test when page loads
+        testCsrfToken();
+    </script>
+    
+    <script src="js/csrf-preload.js"></script>
+    <script>
+        // Test after preload script
+        setTimeout(function() {
+            var results = document.getElementById('results');
+            var additionalTests = [];
+            
+            additionalTests.push('After preload - window.csrfToken: ' + (window.csrfToken || 'NOT SET'));
+            additionalTests.push('After preload - window.Laravel.csrfToken: ' + (window.Laravel && window.Laravel.csrfToken || 'NOT SET'));
+            additionalTests.push('After preload - getCsrfToken(): ' + (window.getCsrfToken ? window.getCsrfToken() : 'NOT SET'));
+            
+            results.innerHTML += '<h3>After Preload Script:</h3><ul><li>' + additionalTests.join('</li><li>') + '</li></ul>';
+        }, 100);
+    </script>
+</body>
+</html>

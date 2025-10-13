@@ -1,0 +1,6 @@
+Employee Name,Employee ID,Department,Position,Basic Salary,House Allowance,Transport Allowance,Meal Allowance,Medical Allowance,Other Allowances,Tax Deduction,Pension Deduction,Insurance Deduction,Other Deductions
+John Doe,EMP001,IT Department,Software Developer,150000,30000,20000,15000,10000,5000,15000,7500,5000,2500
+Jane Smith,EMP002,HR Department,HR Manager,200000,40000,25000,20000,15000,10000,20000,10000,7500,2500
+Michael Johnson,EMP003,Finance Department,Accountant,180000,35000,22000,18000,12000,8000,18000,9000,6000,3000
+Sarah Williams,EMP004,Marketing Department,Marketing Executive,160000,32000,21000,16000,11000,7000,16000,8000,5500,2800
+David Brown,EMP005,Operations Department,Operations Manager,220000,45000,28000,22000,18000,12000,22000,11000,8000,4000
