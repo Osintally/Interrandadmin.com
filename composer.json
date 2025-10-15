@@ -18,7 +18,7 @@
         "aloha/twilio": "^4.0",
         "arcanedev/log-viewer": "9.x",
         "automattic/woocommerce": "^3.0",
-        "barryvdh/laravel-dompdf": "^2.0",
+        "barryvdh/laravel-dompdf": "^2.0.1",
         "composer/semver": "^3.0",
         "consoletvs/charts": "^6.5",
         "giggsey/libphonenumber-for-php": "^8.12",
@@ -31,7 +31,7 @@
         "laravel/ui": "4.x",
         "laravelcollective/html": "^6.3",
         "league/flysystem-aws-s3-v3": "^3.0",
-        "maatwebsite/excel": "^3.1.8",
+        "maatwebsite/excel": "^3.1.48",
         "milon/barcode": "^9.0",
         "mpdf/mpdf": "^8.1",
         "myfatoorah/laravel-package": "*",
@@ -47,7 +47,10 @@
         "srmklive/paypal": "^3.0",
         "stripe/stripe-php": "^13.0",
         "unicodeveloper/laravel-paystack": "^1.0",
-        "yajra/laravel-datatables-oracle": "^9.19"
+        "yajra/laravel-datatables-oracle": "^9.19",
+        "league/commonmark": "^2.4.2",
+        "phpseclib/phpseclib": "^3.0.19",
+        "setasign/fpdi": "^2.6"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",

@@ -21,6 +21,32 @@
 - **Cross-env**: 5.1.4 → 7.0.3 (Environment variable security)
 - **Laravel Mix**: 4.0.7 → 6.0.49 (Build tool security updates)
 
+## Additional Critical Security Fixes (Round 2)
+
+### 5. DomPDF Security Fixes
+- **barryvdh/laravel-dompdf**: Updated to ^2.0.1
+- **Impact**: Fixes phenx/php-svg-lib RCE vulnerability (Critical)
+
+### 6. PhpSpreadsheet Security Fixes
+- **maatwebsite/excel**: Updated to ^3.1.48
+- **Impact**: Fixes SSRF, XSS, and XXE vulnerabilities (High)
+
+### 7. CommonMark Security Fixes
+- **league/commonmark**: Updated to ^2.4.2
+- **Impact**: Fixes quadratic complexity DoS vulnerability (High)
+
+### 8. Cryptography Security Fixes
+- **phpseclib/phpseclib**: Updated to ^3.0.19
+- **Impact**: Fixes ASN1 OID length, prime DoS, and infinite loop vulnerabilities (High)
+
+### 9. PDF Processing Security Fixes
+- **setasign/fpdi**: Updated to ^2.6
+- **Impact**: Fixes memory exhaustion DoS vulnerability (Moderate)
+
+### 10. jQuery Security Fixes
+- **jQuery**: Updated to ^3.7.1 (latest secure version)
+- **Impact**: Fixes multiple XSS vulnerabilities (Moderate)
+
 ## Security Recommendations
 
 ### 1. Regular Updates
