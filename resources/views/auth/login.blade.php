@@ -577,7 +577,19 @@
         margin: 1.5rem 0;
     }
 
-    /* Responsive Design */
+    /* Responsive Design */    # show current remotes
+    git remote -v
+    
+    # set the correct HTTPS URL
+    git remote set-url ignite https://github.com/ignitepack/igniteerp.git
+    
+    # OR set SSH URL (if you prefer)
+    # git remote set-url ignite git@github.com:ignitepack/igniteerp.git
+    
+    # verify and fetch
+    git remote -v
+    git fetch ignite
+    git remote show ignite
     @media (max-width: 1024px) {
         .auth-container {
             flex-direction: column;
